@@ -33,4 +33,8 @@ It is essential that code added to this hook function never attempts
   function, because it is the responsibility of the idle task to clean up
   memory allocated by the kernel to any task that has since been deleted.
 */
+
+  // TODO: 
+  // We should sleep here for a few hundred nanoseconds otherwise this 
+  // FreeRTOS POSIX simulator will consume 100% host CPU core
 }
