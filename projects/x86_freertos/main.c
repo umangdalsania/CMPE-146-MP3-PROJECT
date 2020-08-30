@@ -3,8 +3,6 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
-void vAssertCalled(unsigned long ulLine, const char *const pcFileName) {}
-
 void task(void *p) {
   while (1) {
     puts("Hello");
