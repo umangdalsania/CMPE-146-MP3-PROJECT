@@ -3,17 +3,17 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
-void task(void *p) {
+static void task(void *p) {
   while (1) {
     puts("Hello");
-    vTaskDelay(100);
+    vTaskDelay(500);
   }
 }
 
 int main(void) {
-  printf("Hello world!\n");
+  xTaskCreate(task, "task", 1, NULL, PRIORITY_LOW, NULL);
 
-  xTaskCreate(task, "task", 1, NULL, 1, NULL);
+  puts("Starting FreeRTOS Scheduler\n");
   vTaskStartScheduler();
 
   return 0;

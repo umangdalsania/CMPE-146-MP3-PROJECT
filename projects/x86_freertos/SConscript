@@ -105,8 +105,7 @@ format_filenodes = fsops.filter_files(
 
 if not no_clang_format:
     for filenode in format_filenodes:
-        pass
-        #env_arm.ClangFormat(filenode=filenode, verbose=verbose)
+        env_x86.ClangFormat(filenode=filenode, verbose=verbose)
 
 if not no_unit_test:
     unit_test_results = env_x86.Test(
