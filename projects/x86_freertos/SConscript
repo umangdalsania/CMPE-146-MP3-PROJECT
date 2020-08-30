@@ -24,6 +24,7 @@ Import("project_dirnode")
 Define file nodes and directory nodes
 """
 PROJECT_DIR = project_dirnode
+FREERTOS_SOURCE_DIR = PROJECT_DIR.Dir("freertos_source")
 
 """ Build artifact nodes """
 VARIANT_DIR = Dir("#/_build_{}".format(PROJECT_DIR.name))
@@ -37,7 +38,7 @@ INCLUDE_DIRS = []
 """
 We can only build one of the following for FreeRTOS memory
 """
-MemMangDir = PROJECT_DIR.Dir("Source").Dir("portable").Dir("MemMang")
+MemMangDir = FREERTOS_SOURCE_DIR.Dir("portable").Dir("MemMang")
 EXCLUDED_SRC_FILES = [
     MemMangDir.File("heap_1.c"),
     MemMangDir.File("heap_2.c"),
@@ -94,7 +95,7 @@ FORMAT_EXCLUDED_FILES = [
 ]
 
 FORMAT_EXCLUDED_DIRS = [
-    PROJECT_DIR.Dir("Source"),
+    FREERTOS_SOURCE_DIR,
 ]
 
 format_filenodes = fsops.filter_files(

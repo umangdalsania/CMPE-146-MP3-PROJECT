@@ -4,8 +4,11 @@
 #include "task.h"
 
 static void task(void *p) {
+  unsigned counter = 0;
   while (1) {
-    puts("Hello");
+    printf("Counter = %u\n", counter);
+
+    ++counter;
     vTaskDelay(500);
   }
 }

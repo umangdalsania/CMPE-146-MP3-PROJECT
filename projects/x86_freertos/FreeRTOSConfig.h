@@ -26,6 +26,7 @@
 // Do not use on FreeRTOS POSIX based simulator
 #define configCHECK_FOR_STACK_OVERFLOW                    0
 #define INCLUDE_uxTaskGetStackHighWaterMark               0
+//#define configMAX_SYSCALL_INTERRUPT_PRIORITY            0
 
 // Only used based on memory management scheme; see SConscript file
 #define configTOTAL_HEAP_SIZE                             ((size_t)(64 * 1024))
@@ -40,7 +41,6 @@
 #define configUSE_APPLICATION_TASK_TAG                    1
 #define configUSE_COUNTING_SEMAPHORES                     1
 #define configUSE_ALTERNATIVE_API                         0
-//#define configMAX_SYSCALL_INTERRUPT_PRIORITY            1
 
 #define configUSE_QUEUE_SETS                              1
 #define configUSE_TASK_NOTIFICATIONS                      1
