@@ -3,7 +3,6 @@
 
 #include "board_io.h"
 #include "delay.h"
-#include "gpio.h"
 #include "lpc40xx.h"
 
 #include "clock.h"
@@ -27,15 +26,13 @@ static uint32_t application_file_buffer[4 * 1024 / sizeof(uint32_t)];
 static const char *application_file_name = "lpc40xx_application.bin";
 static const char *application_file_name_after_flash = "lpc40xx_application.bin.flashed";
 
-static bool file_present(const char *filename);
-static void copy_application_from_sd_card_to_flash(void);
+static bool flash__fw_file_present(const char *filename);
+static void flash__copy_from_sd_card(void);
 static void flash__erase_application_flash(void);
 
-static const unsigned *application_get_entry_function_address(void) {
-  return (unsigned *)(application_start_address + 4);
-}
+static const unsigned *application_get_entry_function_address(void);
 static bool application_is_valid(void);
-static void execute_user_app(void);
+static void application_execute(void);
 
 int main(void) {
   delay__ms(100);
@@ -45,11 +42,11 @@ int main(void) {
   puts("-----------------");
   delay__ms(100);
 
-  if (file_present(application_file_name)) {
+  if (flash__fw_file_present(application_file_name)) {
     printf("INFO: Located new FW file: %s\n", application_file_name);
 
     flash__erase_application_flash();
-    copy_application_from_sd_card_to_flash();
+    flash__copy_from_sd_card();
   } else {
     printf("INFO: %s not detected on SD card\n", application_file_name);
   }
@@ -61,7 +58,6 @@ int main(void) {
   if (application_is_valid()) {
     hw_timer__disable(LPC_TIMER__0);
     // TODO: uninit SPI
-    // TODO: uninit board io
 
     puts("  Booting...\n\n");
 
@@ -70,7 +66,7 @@ int main(void) {
     uart__uninit(UART__0);
     board_io__uninit();
 
-    execute_user_app();
+    application_execute();
   } else {
     const unsigned *application_entry_point = application_get_entry_function_address();
     printf("Application entry point: %p: %p\n", application_entry_point, (void *)(*application_entry_point));
@@ -86,7 +82,7 @@ int main(void) {
   return 0;
 }
 
-static bool file_present(const char *filename) {
+static bool flash__fw_file_present(const char *filename) {
   bool present = false;
   FILINFO file_info;
 
@@ -98,7 +94,7 @@ static bool file_present(const char *filename) {
   return present;
 }
 
-static void copy_application_from_sd_card_to_flash(void) {
+static void flash__copy_from_sd_card(void) {
   FIL file;
   if (FR_OK == f_open(&file, application_file_name, FA_READ)) {
     printf("  Opened %s\n", application_file_name);
@@ -146,8 +142,6 @@ static void copy_application_from_sd_card_to_flash(void) {
       printf("ERROR: Failed to rename %s to %s\n", application_file_name, application_file_name_after_flash);
     }
 #endif
-  } else {
-    printf("  INFO: Could not open %s\n", application_file_name);
   }
 
   puts("");
@@ -167,13 +161,17 @@ static void flash__erase_application_flash(void) {
   puts("");
 }
 
+static const unsigned *application_get_entry_function_address(void) {
+  return (unsigned *)(application_start_address + 4);
+}
+
 static bool application_is_valid(void) {
   const unsigned *app_code_start = application_get_entry_function_address();
 
   return (*app_code_start >= application_start_address) && (*app_code_start <= application_end_address);
 }
 
-static void execute_user_app(void) {
+static void application_execute(void) {
   // Re-map Interrupt vectors to the user application
   SCB->VTOR = (application_start_address & 0x1FFFFF80);
 
@@ -181,10 +179,9 @@ static void execute_user_app(void) {
   const unsigned *app_code_start = application_get_entry_function_address();
 
   // Get the function pointer of user application
-  void (*user_code_entry)(void);
-  user_code_entry = (void *)*app_code_start;
+  void (*user_code_entry)(void) = (void *)*app_code_start;
 
-  // Set user application stack size and run it
+  // Application flash should have interrupt vector and first entry should be the stack pointer of that application
   const uint32_t stack_pointer_of_application = *(uint32_t *)(application_start_address);
   __set_PSP(stack_pointer_of_application);
   __set_MSP(stack_pointer_of_application);
