@@ -72,16 +72,14 @@ int main(void) {
   puts("Attemping to boot application");
 
   if (application_is_valid()) {
-    clock__uninit();
-    hw_timer__disable(LPC_TIMER__0);
+    // hw_timer__disable(LPC_TIMER__0);
     // TODO: uninit SPI
 
-    puts("----------------------");
-    puts("Booting to application");
-    puts("----------------------");
+    puts("  Booting...");
 
     // No more printfs after this
-    uart__uninit(UART__0);
+    // clock__uninit();
+    // uart__uninit(UART__0);
     execute_user_app();
   } else {
     const unsigned *application_entry_point = application_get_entry_function_address();
@@ -201,12 +199,16 @@ static void execute_user_app(void) {
   // Application code's RESET handler starts at Application Code + 4
   const unsigned *app_code_start = application_get_entry_function_address();
 
+  printf("VTOR: %p\n", SCB->VTOR);
+
   // Get the function pointer of user application
   void (*user_code_entry)(void);
   user_code_entry = (void *)*app_code_start;
 
+  printf("Entry %p\n", user_code_entry);
+
   // Set user application stack size and run it
-  __set_PSP((uint32_t)(app_code_start - 4));
-  __set_MSP((uint32_t)(app_code_start - 4));
+  __set_PSP(*(uint32_t *)(application_start_address));
+  __set_MSP(*(uint32_t *)(application_start_address));
   user_code_entry();
 }
