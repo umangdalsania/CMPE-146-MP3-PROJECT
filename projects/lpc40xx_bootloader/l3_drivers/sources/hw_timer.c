@@ -20,15 +20,7 @@ void hw_timer__enable(lpc_timer_e timer, const uint32_t prescalar_divider, funct
   // Peripheral must be turned on before accessing its registers
   lpc_peripheral__turn_on_power_to(hw_timers[timer].peripheral_id);
 
-  hw_timers[timer].registers->TCR = 0;
-  hw_timers[timer].registers->TC = 0;
-
-  hw_timers[timer].registers->IR = 0x3F; // Clear all interrupts
-  hw_timers[timer].registers->MCR = 0;   // Clear all match register settings
-  hw_timers[timer].registers->MR0 = 0;
-  hw_timers[timer].registers->MR1 = 0;
-  hw_timers[timer].registers->MR2 = 0;
-  hw_timers[timer].registers->MR3 = 0;
+  hw_timer__disable(timer);
 
   /* Interrupt can be enabled because we can assume the timer is not setup
    * for interrupt yet through hw_timer__enable_match_isr()
@@ -37,6 +29,19 @@ void hw_timer__enable(lpc_timer_e timer, const uint32_t prescalar_divider, funct
 
   hw_timers[timer].registers->PR = prescalar_divider;
   hw_timers[timer].registers->TCR = 1; // Enable
+}
+
+void hw_timer__disable(lpc_timer_e timer) {
+  hw_timers[timer].registers->TCR = 0;
+  hw_timers[timer].registers->TC = 0;
+  hw_timers[timer].registers->PR = 0;
+
+  hw_timers[timer].registers->IR = 0x3F; // Clear all interrupts
+  hw_timers[timer].registers->MCR = 0;   // Clear all match register settings
+  hw_timers[timer].registers->MR0 = 0;
+  hw_timers[timer].registers->MR1 = 0;
+  hw_timers[timer].registers->MR2 = 0;
+  hw_timers[timer].registers->MR3 = 0;
 }
 
 void hw_timer__enable_match_isr(lpc_timer_e timer, lpc_timer__mr_e mr_type, const uint32_t mr_value) {

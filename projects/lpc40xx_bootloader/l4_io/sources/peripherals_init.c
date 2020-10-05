@@ -21,11 +21,7 @@ void peripherals_init(void) {
 
   const uint32_t spi_sd_max_speed_khz = 24 * 1000;
   ssp2__initialize(spi_sd_max_speed_khz);
-  const char *mount_info = peripherals_init__mount_sd_card();
-
-  // UART is initialized, so we can now start using printf()
-  const char *line = "--------------------------------------------------------------------------------";
-  printf("\n%s\n%s(): Low level startup\n%s\n", line, __FUNCTION__, mount_info);
+  peripherals_init__mount_sd_card();
 }
 
 static const char *peripherals_init__mount_sd_card(void) {
@@ -50,5 +46,5 @@ static void peripherals_init__uart0_init(void) {
   setvbuf(stdin, 0, _IONBF, 0);
 
   // Note: PIN functions are initialized by board_io__initialize() for P0.2(Tx) and P0.3(Rx)
-  uart__init(UART__0, clock__get_peripheral_clock_hz(), 115200);
+  uart__init(UART__0);
 }

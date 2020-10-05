@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "uart.h"
 
 #include "lpc40xx.h"
@@ -59,25 +61,27 @@ static void uart__wait_for_transmit_to_complete(lpc_uart *uart_regs) {
  *
  ******************************************************************************/
 
-void uart__init(uart_e uart, uint32_t peripheral_clock, uint32_t baud_rate) {
+void uart__init(uart_e uart) {
   lpc_peripheral__turn_on_power_to(uart_peripheral_ids[uart]);
 
-  const float roundup_offset = 0.5;
-  const uint16_t divider = (uint16_t)((peripheral_clock / (16 * baud_rate)) + roundup_offset);
   const uint8_t dlab_bit = (1 << 7);
   const uint8_t eight_bit_datalen = 3;
 
   lpc_uart *uart_regs = uarts[uart].registers;
 
   uart_regs->LCR = dlab_bit; // Set DLAB bit to access DLM & DLL
-  uart_regs->DLM = (divider >> 8) & 0xFF;
-  uart_regs->DLL = (divider >> 0) & 0xFF;
 
   /* Bootloader uses Uart0 fractional dividers and can wreck havoc in our baud rate code, so re-initialize it
    * Lesson learned: DO NOT RELY ON RESET VALUES
    */
   const uint32_t default_reset_fdr_value = (1 << 4);
   uart_regs->FDR = default_reset_fdr_value;
+
+  // Hardcoded for PCLK = 12MHz, and baud = 115200
+  const uint16_t divider = 4;
+  uart_regs->DLM = (divider >> 8) & 0xFF;
+  uart_regs->DLL = (divider >> 0) & 0xFF;
+  uart_regs->FDR = 5 | (8 << 4);
 
   // Important: Set FCR value before enable UART by writing the LCR register
   // Important: FCR is a write-only register, and we cannot use R/M/W such as |=
@@ -87,6 +91,17 @@ void uart__init(uart_e uart, uint32_t peripheral_clock, uint32_t baud_rate) {
   uart_regs->FCR = enable_fifo | eight_char_timeout;
 
   uart_regs->LCR = eight_bit_datalen; // DLAB is reset back to zero also
+}
+
+void uart__uninit(uart_e uart) {
+  lpc_uart *uart_regs = uarts[uart].registers;
+
+  uart_regs->LCR = (1 << 7);
+  uart_regs->FDR = (1 << 4);
+  uart_regs->DLL = 0;
+  uart_regs->DLM = 0;
+  uart_regs->LCR = 0;
+  uart_regs->FCR = 0;
 }
 
 bool uart__is_initialized(uart_e uart) {
@@ -109,7 +124,7 @@ bool uart__polled_get(uart_e uart, char *input_byte) {
      * then we opt to block forever using uart__get() to provide 'polled' behavior.
      */
     if (rtos_is_running && queue_is_enabled) {
-      status = uart__get(uart, input_byte, UINT32_MAX);
+      // status = uart__get(uart, input_byte, UINT32_MAX);
     } else {
       lpc_uart *uart_regs = uarts[uart].registers;
       const uint32_t char_available_bitmask = (1 << 0);
