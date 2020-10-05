@@ -134,18 +134,6 @@ static void isr_hard_fault(void) {
 }
 
 void isr_hard_fault_handler(unsigned long *hardfault_args) {
-  // crash__registers_s *c = crash__record_get();
-
-  // c->registers[0] = ((unsigned long)hardfault_args[0]);
-  // c->registers[1] = ((unsigned long)hardfault_args[1]);
-  // c->registers[2] = ((unsigned long)hardfault_args[2]);
-  // c->registers[3] = ((unsigned long)hardfault_args[3]);
-
-  // c->r12 = ((unsigned long)hardfault_args[4]);
-  // c->lr = ((unsigned long)hardfault_args[5]) - 1;
-  // c->pc = ((unsigned long)hardfault_args[6]);
-  // c->psr = ((unsigned long)hardfault_args[7]);
-
   // Save the data and reboot and print the registers upon the next boot
   NVIC_SystemReset();
 }

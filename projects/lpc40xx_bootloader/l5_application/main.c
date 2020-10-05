@@ -37,26 +37,7 @@ static const unsigned *application_get_entry_function_address(void) {
 static bool application_is_valid(void);
 static void execute_user_app(void);
 
-static inline void turn_on_led(const gpio_s led) { gpio__reset(led); }
-static inline void turn_off_led(const gpio_s led) { gpio__set(led); }
-
 int main(void) {
-  const gpio_s bootloader_led = board_io__get_led0();
-  const gpio_s file_present_led = board_io__get_led1();
-  const gpio_s app_boot_led = board_io__get_led2();
-  const gpio_s app_not_valid_led = board_io__get_led3();
-
-#if 0
-  const gpio_s sw = gpio__construct_as_input(GPIO__PORT_0, 29);
-  while (true) {
-    if (true == gpio__get(sw)) {
-      break;
-    }
-  };
-#endif
-
-  turn_on_led(bootloader_led);
-
   delay__ms(100);
   puts("-----------------");
   puts("BOOTLOADER");
@@ -65,7 +46,6 @@ int main(void) {
   delay__ms(100);
 
   if (file_present(application_file_name)) {
-    turn_on_led(file_present_led);
     printf("INFO: Located new FW file: %s\n", application_file_name);
 
     flash__erase_application_flash();
@@ -79,9 +59,6 @@ int main(void) {
   puts("Attemping to boot application");
 
   if (application_is_valid()) {
-    turn_on_led(app_boot_led);
-    delay__ms(100);
-
     hw_timer__disable(LPC_TIMER__0);
     // TODO: uninit SPI
     // TODO: uninit board io
@@ -95,21 +72,14 @@ int main(void) {
 
     execute_user_app();
   } else {
-    turn_on_led(app_not_valid_led);
-
     const unsigned *application_entry_point = application_get_entry_function_address();
     printf("Application entry point: %p: %p\n", application_entry_point, (void *)(*application_entry_point));
 
-    unsigned counter = 0;
     while (1) {
-      ++counter;
-      if (0 == (counter % 6)) {
-        puts("ERROR: Application not valid, hence cannot boot to the application");
-        printf("Load '%s' to the SD card to re-flash, and reboot this board\n", application_file_name);
-      }
+      puts("ERROR: Application not valid, hence cannot boot to the application");
+      printf("Load '%s' to the SD card to re-flash, and reboot this board\n", application_file_name);
 
-      gpio__toggle(bootloader_led);
-      delay__ms(500);
+      delay__ms(3000);
     }
   }
 
