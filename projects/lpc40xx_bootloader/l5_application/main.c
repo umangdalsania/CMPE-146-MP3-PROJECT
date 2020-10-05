@@ -26,6 +26,8 @@ static uint32_t application_file_buffer[4 * 1024 / sizeof(uint32_t)];
 static const char *application_file_name = "lpc40xx_application.bin";
 static const char *application_file_name_after_flash = "lpc40xx_application.bin.flashed";
 
+static void handle_application_boot(void);
+
 static bool flash__fw_file_present(const char *filename);
 static void flash__copy_from_sd_card(void);
 static void flash__erase_application_flash(void);
@@ -54,7 +56,12 @@ int main(void) {
   puts("");
   puts("-----------------------------");
   puts("Attemping to boot application");
+  handle_application_boot();
 
+  return 0;
+}
+
+static void handle_application_boot(void) {
   if (application_is_valid()) {
     hw_timer__disable(LPC_TIMER__0);
     // TODO: uninit SPI
@@ -78,8 +85,6 @@ int main(void) {
       delay__ms(3000);
     }
   }
-
-  return 0;
 }
 
 static bool flash__fw_file_present(const char *filename) {
