@@ -49,14 +49,6 @@ void board_io__initialize(void) {
   board_io__sd_card_ds();
   gpio__construct_as_input(GPIO__PORT_1, 9); // SD card detect
 
-#if 0
-  // I2C pins; these require open-drain mode to be enabled
-  const gpio_s sda_2 = gpio__construct_with_function(GPIO__PORT_0, 10, GPIO__FUNCTION_2); // P0.10 - SDA
-  const gpio_s scl_2 = gpio__construct_with_function(GPIO__PORT_0, 11, GPIO__FUNCTION_2); // P0.11 - SCL
-  gpio__enable_open_drain(sda_2);
-  gpio__enable_open_drain(scl_2);
-#endif
-
   // Output pins
   board_io__led0 = gpio__construct_as_output(GPIO__PORT_2, 3);
   board_io__led1 = gpio__construct_as_output(GPIO__PORT_1, 26);
@@ -66,20 +58,27 @@ void board_io__initialize(void) {
   gpio__set(board_io__led1);
   gpio__set(board_io__led2);
   gpio__set(board_io__led3);
+}
 
-#if 0
-  // Input pins
-  board_io__sw0 = gpio__construct_as_input(GPIO__PORT_1, 19);
-  board_io__sw1 = gpio__construct_as_input(GPIO__PORT_1, 15);
-  board_io__sw2 = gpio__construct_as_input(GPIO__PORT_0, 30);
-  board_io__sw3 = gpio__construct_as_input(GPIO__PORT_0, 29);
+void board_io__uninit(void) {
+  // UART
+  gpio__construct_with_function(GPIO__PORT_0, 2, GPIO__FUNCITON_0_IO_PIN);
+  gpio__construct_with_function(GPIO__PORT_0, 3, GPIO__FUNCITON_0_IO_PIN);
 
-  // SW0 and SW1 require internal pull down resistors
-  // otherwise undefined behavior will result from
-  // floating pins on open switch
-  gpio__enable_pull_down_resistors(board_io__sw0);
-  gpio__enable_pull_down_resistors(board_io__sw1);
-#endif
+  // SPI
+  gpio__construct_with_function(GPIO__PORT_1, 0, GPIO__FUNCITON_0_IO_PIN);
+  gpio__construct_with_function(GPIO__PORT_1, 1, GPIO__FUNCITON_0_IO_PIN);
+  gpio__construct_with_function(GPIO__PORT_1, 4, GPIO__FUNCITON_0_IO_PIN);
+
+  // LEDs
+  gpio__reset(board_io__led0);
+  gpio__reset(board_io__led1);
+  gpio__reset(board_io__led2);
+  gpio__reset(board_io__led3);
+  gpio__construct_with_function(GPIO__PORT_2, 3, GPIO__FUNCITON_0_IO_PIN);
+  gpio__construct_with_function(GPIO__PORT_1, 26, GPIO__FUNCITON_0_IO_PIN);
+  gpio__construct_with_function(GPIO__PORT_1, 24, GPIO__FUNCITON_0_IO_PIN);
+  gpio__construct_with_function(GPIO__PORT_1, 18, GPIO__FUNCITON_0_IO_PIN);
 }
 
 // Note: Not using gpio.h API here to optimize the speed of SSP CS selection

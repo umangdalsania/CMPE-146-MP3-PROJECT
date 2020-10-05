@@ -41,23 +41,27 @@ static inline void turn_on_led(const gpio_s led) { gpio__reset(led); }
 static inline void turn_off_led(const gpio_s led) { gpio__set(led); }
 
 int main(void) {
-  delay__ms(100);
-  puts("----------");
-  puts("BOOTLOADER");
-  puts("----------");
-
   const gpio_s bootloader_led = board_io__get_led0();
   const gpio_s file_present_led = board_io__get_led1();
+  const gpio_s app_boot_led = board_io__get_led2();
+  const gpio_s app_not_valid_led = board_io__get_led3();
 
+#if 0
   const gpio_s sw = gpio__construct_as_input(GPIO__PORT_0, 29);
   while (true) {
     if (true == gpio__get(sw)) {
       break;
     }
   };
+#endif
 
   turn_on_led(bootloader_led);
-  delay__ms(5000);
+
+  delay__ms(100);
+  puts("----------");
+  puts("BOOTLOADER");
+  puts("----------");
+  delay__ms(100);
 
   if (file_present(application_file_name)) {
     turn_on_led(file_present_led);
@@ -65,23 +69,32 @@ int main(void) {
     copy_application_from_sd_card_to_flash();
   } else {
     printf("SD card %s\n", board_io__sd_card_is_present() ? "PRESENT" : "ABSENT");
-    printf("%s not detected on SD card, attempting to boot application...", application_file_name);
+    printf("  INFO: %s not detected on SD card\n", application_file_name);
   }
 
+  puts("");
   puts("-----------------------------");
   puts("Attemping to boot application");
 
   if (application_is_valid()) {
-    // hw_timer__disable(LPC_TIMER__0);
-    // TODO: uninit SPI
+    turn_on_led(app_boot_led);
+    delay__ms(100);
 
-    puts("  Booting...");
+    hw_timer__disable(LPC_TIMER__0);
+    // TODO: uninit SPI
+    // TODO: uninit board io
+
+    puts("  Booting...\n\n");
 
     // No more printfs after this
-    // clock__uninit();
-    // uart__uninit(UART__0);
+    clock__uninit();
+    uart__uninit(UART__0);
+    board_io__uninit();
+
     execute_user_app();
   } else {
+    turn_on_led(app_not_valid_led);
+
     const unsigned *application_entry_point = application_get_entry_function_address();
     printf("Application entry point: %p: %p\n", application_entry_point, (void *)(*application_entry_point));
 
@@ -137,9 +150,7 @@ static void copy_application_from_sd_card_to_flash(void) {
 
       printf("\n  Read %u bytes\n", (unsigned)bytes_read);
 
-#if 1
       uint8_t status = 0;
-
       status = Chip_IAP_PreSectorForReadWrite(_s16_32k, _s29_32k);
       printf("  Prepare sectors: %s (%u)\n", (0 == status) ? "OK" : "ERROR", (unsigned)status);
 
@@ -152,13 +163,12 @@ static void copy_application_from_sd_card_to_flash(void) {
           Chip_IAP_Compare(flash_write_address, (uint32_t)application_file_buffer, sizeof(application_file_buffer));
       printf("  Compare %5u bytes at 0x%08lX: %s (%u)\n", sizeof(application_file_buffer), flash_write_address,
              (0 == status) ? "OK" : "ERROR", (unsigned)status);
-#endif
 
       flash_write_address += bytes_read;
     }
     f_close(&file);
 
-#if 0
+#if 1
     if (FR_OK == f_rename(application_file_name, application_file_name_after_flash)) {
       printf("SUCCESS: Renamed %s to %s\n", application_file_name, application_file_name_after_flash);
     } else {
@@ -199,16 +209,14 @@ static void execute_user_app(void) {
   // Application code's RESET handler starts at Application Code + 4
   const unsigned *app_code_start = application_get_entry_function_address();
 
-  printf("VTOR: %p\n", SCB->VTOR);
-
   // Get the function pointer of user application
   void (*user_code_entry)(void);
   user_code_entry = (void *)*app_code_start;
 
-  printf("Entry %p\n", user_code_entry);
-
   // Set user application stack size and run it
-  __set_PSP(*(uint32_t *)(application_start_address));
-  __set_MSP(*(uint32_t *)(application_start_address));
+  const uint32_t stack_pointer_of_application = *(uint32_t *)(application_start_address);
+  __set_PSP(stack_pointer_of_application);
+  __set_MSP(stack_pointer_of_application);
+
   user_code_entry();
 }
