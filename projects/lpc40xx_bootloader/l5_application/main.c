@@ -58,18 +58,20 @@ int main(void) {
   turn_on_led(bootloader_led);
 
   delay__ms(100);
-  puts("----------");
+  puts("-----------------");
   puts("BOOTLOADER");
-  puts("----------");
+  printf("SD card: %s\n", board_io__sd_card_is_present() ? "OK" : "ABSENT");
+  puts("-----------------");
   delay__ms(100);
 
   if (file_present(application_file_name)) {
     turn_on_led(file_present_led);
+    printf("INFO: Located new FW file: %s\n", application_file_name);
+
     flash__erase_application_flash();
     copy_application_from_sd_card_to_flash();
   } else {
-    printf("SD card %s\n", board_io__sd_card_is_present() ? "PRESENT" : "ABSENT");
-    printf("  INFO: %s not detected on SD card\n", application_file_name);
+    printf("INFO: %s not detected on SD card\n", application_file_name);
   }
 
   puts("");
@@ -127,8 +129,6 @@ static bool file_present(const char *filename) {
 }
 
 static void copy_application_from_sd_card_to_flash(void) {
-  printf("Attempting to copy %s\n", application_file_name);
-
   FIL file;
   if (FR_OK == f_open(&file, application_file_name, FA_READ)) {
     printf("  Opened %s\n", application_file_name);
@@ -144,24 +144,25 @@ static void copy_application_from_sd_card_to_flash(void) {
 
       // End of file
       if (!(bytes_read > 0)) {
-        puts("  End of file");
         break;
       }
 
-      printf("\n  Read %u bytes\n", (unsigned)bytes_read);
+      printf("\n  Read %u bytes,", (unsigned)bytes_read);
 
       uint8_t status = 0;
       status = Chip_IAP_PreSectorForReadWrite(_s16_32k, _s29_32k);
-      printf("  Prepare sectors: %s (%u)\n", (0 == status) ? "OK" : "ERROR", (unsigned)status);
+      if (0 != status) {
+        printf("  Prepare sectors: %s (%u)\n", (0 == status) ? "OK" : "ERROR", (unsigned)status);
+      }
 
       status = Chip_IAP_CopyRamToFlash(flash_write_address, (uint32_t *)application_file_buffer,
                                        sizeof(application_file_buffer));
-      printf("  Write %5u bytes to 0x%08lX: %s (%u)\n", sizeof(application_file_buffer), flash_write_address,
+      printf("  Write %u bytes to 0x%08lX: %s (%u)\n", sizeof(application_file_buffer), flash_write_address,
              (0 == status) ? "OK" : "ERROR", (unsigned)status);
 
       status =
           Chip_IAP_Compare(flash_write_address, (uint32_t)application_file_buffer, sizeof(application_file_buffer));
-      printf("  Compare %5u bytes at 0x%08lX: %s (%u)\n", sizeof(application_file_buffer), flash_write_address,
+      printf("  Compare %u bytes at 0x%08lX: %s (%u)\n", sizeof(application_file_buffer), flash_write_address,
              (0 == status) ? "OK" : "ERROR", (unsigned)status);
 
       flash_write_address += bytes_read;
