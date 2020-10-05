@@ -7,10 +7,12 @@ This is a custom bootloader for the SJ2 board. You may compile and load this boo
 The bootloader assumes that it lives at the first 64K of flash memory. Hence, when you build your application, you need to build it with the correct address that makes this assumption correct. It is very easy to build your application such that it will start at 64K rather than the default of 0K. Simply modify `layout_lpc4078.ld`.
 
 ```
+/* Use application_flash_offset=64k if using SD card bootloader; see lpc40xx_bootloader/README.md */
+application_flash_offset = 64k;
+
 MEMORY
 {
-  /* Moidfy the flash_512k such that it begins at 0x00010000 (64k) and reduce length from 512k to 448k */
-  flash_512k (rx) : ORIGIN = 0x00010000, LENGTH = 448k
+  flash_512k (rx) : ORIGIN = 0x00000000 + application_flash_offset, LENGTH = 512k - application_flash_offset
   ram_64k (rwx)   : ORIGIN = 0x10000000, LENGTH = 64K   /* Main RAM       */
   ram_32k (rwx)   : ORIGIN = 0x20000000, LENGTH = 32K   /* Peripheral RAM */
 }
