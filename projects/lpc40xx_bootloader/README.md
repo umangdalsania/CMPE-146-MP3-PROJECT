@@ -72,10 +72,9 @@ Attemping to boot application
 When a new application is not present on the SD card, the bootloader should quickly boot your application and you should observe output like the following:
 
 ```
------------------
-BOOTLOADER
-SD card: OK
------------------
+--------- BOOTLOADER ---------
+-- SD card:     OK
+------------------------------
 INFO: lpc40xx_application.bin not detected on SD card
 
 -----------------------------

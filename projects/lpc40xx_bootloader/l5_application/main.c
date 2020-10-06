@@ -78,7 +78,7 @@ static bool flash__fw_file_present(const char *filename) {
 
 static void flash__copy_from_sd_card(void) {
   FIL file;
-  static uint32_t file_buffer[32 * 1024 / sizeof(uint32_t)];
+  static uint32_t file_buffer[32 * 1024 / sizeof(uint32_t)] __attribute__((aligned(256)));
   const size_t flash_write_chunk_size = 4096; // Valid values: 256,512,1024,4096
 
   if (FR_OK == f_open(&file, APP_FW_FILENAME, FA_READ)) {
