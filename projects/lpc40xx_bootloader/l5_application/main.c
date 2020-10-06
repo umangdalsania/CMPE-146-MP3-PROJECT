@@ -21,7 +21,7 @@ static const uint32_t application_start_address = 0x00010000;
 static const uint32_t application_end_address = 0x0007FFFF;
 
 /// Valid values: 256,512,1024,4096
-static uint32_t application_file_buffer[4 * 1024 / sizeof(uint32_t)];
+static uint32_t file_buffer[4 * 1024 / sizeof(uint32_t)];
 
 static const char *application_file_name = "lpc40xx_application.bin";
 static const char *application_file_name_after_flash = "lpc40xx_application.bin.flashed";
@@ -106,10 +106,10 @@ static void flash__copy_from_sd_card(void) {
 
     uint32_t flash_write_address = application_start_address;
     while (true) {
-      memset(application_file_buffer, 0xFF, sizeof(application_file_buffer));
+      memset(file_buffer, 0xFF, sizeof(file_buffer));
 
       UINT bytes_read = 0;
-      if (FR_OK != f_read(&file, application_file_buffer, sizeof(application_file_buffer), &bytes_read)) {
+      if (FR_OK != f_read(&file, file_buffer, sizeof(file_buffer), &bytes_read)) {
         break;
       }
 
@@ -126,14 +126,12 @@ static void flash__copy_from_sd_card(void) {
         printf("  Prepare sectors: %s (%u)\n", (0 == status) ? "OK" : "ERROR", (unsigned)status);
       }
 
-      status = Chip_IAP_CopyRamToFlash(flash_write_address, (uint32_t *)application_file_buffer,
-                                       sizeof(application_file_buffer));
-      printf("  Write %u bytes to 0x%08lX: %s (%u)\n", sizeof(application_file_buffer), flash_write_address,
+      status = Chip_IAP_CopyRamToFlash(flash_write_address, (uint32_t *)file_buffer, sizeof(file_buffer));
+      printf("  Write %u bytes to 0x%08lX: %s (%u)\n", sizeof(file_buffer), flash_write_address,
              (0 == status) ? "OK" : "ERROR", (unsigned)status);
 
-      status =
-          Chip_IAP_Compare(flash_write_address, (uint32_t)application_file_buffer, sizeof(application_file_buffer));
-      printf("  Compare %u bytes at 0x%08lX: %s (%u)\n", sizeof(application_file_buffer), flash_write_address,
+      status = Chip_IAP_Compare(flash_write_address, (uint32_t)file_buffer, sizeof(file_buffer));
+      printf("  Compare %u bytes at 0x%08lX: %s (%u)\n", sizeof(file_buffer), flash_write_address,
              (0 == status) ? "OK" : "ERROR", (unsigned)status);
 
       flash_write_address += bytes_read;

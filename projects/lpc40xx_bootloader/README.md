@@ -26,7 +26,7 @@ The bootloader can copy compiled binary file from the SD card to the flash memor
   * SD Card needs to be formatted with FAT16 or FAT32
   * The binary file needs to be compiled with offset of `64k`
 * Bootloader will boot, and copy the file from SD card to the on-board flash memory
-* Bootloader will rename `lpc40xx_application.bin` to `lpc40xx_application.bin.flash`
+* Bootloader will rename `lpc40xx_application.bin` to `lpc40xx_application.bin.flashed`
   * This will prevent programming of the same file in a repetitive loop
 
 ## Boot messages
