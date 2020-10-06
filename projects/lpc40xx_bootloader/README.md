@@ -35,56 +35,34 @@ The bootloader can copy compiled binary file from the SD card to the flash memor
 
 When a new application is placed on the SD card, you should see messages that resemble the following output:
 ```
------------------
-BOOTLOADER
-SD card: OK
------------------
+------------------------------
+--------- BOOTLOADER ---------
+-- SD card:     OK
+------------------------------
 INFO: Located new FW file: lpc40xx_application.bin
 Preparing and erasing sectors...
   Prepare sectors: OK (0)
   Erased sectors : OK (0)
 
   Opened lpc40xx_application.bin
+  Read 32768 bytes
+    Write 4096 bytes to 0x00010000: OK (0)
+    Write 4096 bytes to 0x00011000: OK (0)
+    Write 4096 bytes to 0x00012000: OK (0)
+    Write 4096 bytes to 0x00013000: OK (0)
+    Write 4096 bytes to 0x00014000: OK (0)
+    Write 4096 bytes to 0x00015000: OK (0)
+    Write 4096 bytes to 0x00016000: OK (0)
+    Write 4096 bytes to 0x00017000: OK (0)
+  Read 15536 bytes
+    Write 4096 bytes to 0x00018000: OK (0)
+    Write 4096 bytes to 0x00019000: OK (0)
+    Write 4096 bytes to 0x0001A000: OK (0)
+    Write 4096 bytes to 0x0001B000: OK (0)
 
-  Read 4096 bytes,  Write 4096 bytes to 0x00010000: OK (0)
-  Compare 4096 bytes at 0x00010000: OK (0)
-
-  Read 4096 bytes,  Write 4096 bytes to 0x00011000: OK (0)
-  Compare 4096 bytes at 0x00011000: OK (0)
-
-  Read 4096 bytes,  Write 4096 bytes to 0x00012000: OK (0)
-  Compare 4096 bytes at 0x00012000: OK (0)
-
-  Read 4096 bytes,  Write 4096 bytes to 0x00013000: OK (0)
-  Compare 4096 bytes at 0x00013000: OK (0)
-
-  Read 4096 bytes,  Write 4096 bytes to 0x00014000: OK (0)
-  Compare 4096 bytes at 0x00014000: OK (0)
-
-  Read 4096 bytes,  Write 4096 bytes to 0x00015000: OK (0)
-  Compare 4096 bytes at 0x00015000: OK (0)
-
-  Read 4096 bytes,  Write 4096 bytes to 0x00016000: OK (0)
-  Compare 4096 bytes at 0x00016000: OK (0)
-
-  Read 4096 bytes,  Write 4096 bytes to 0x00017000: OK (0)
-  Compare 4096 bytes at 0x00017000: OK (0)
-
-  Read 4096 bytes,  Write 4096 bytes to 0x00018000: OK (0)
-  Compare 4096 bytes at 0x00018000: OK (0)
-
-  Read 4096 bytes,  Write 4096 bytes to 0x00019000: OK (0)
-  Compare 4096 bytes at 0x00019000: OK (0)
-
-  Read 4096 bytes,  Write 4096 bytes to 0x0001A000: OK (0)
-  Compare 4096 bytes at 0x0001A000: OK (0)
-
-  Read 3248 bytes,  Write 4096 bytes to 0x0001B000: OK (0)
-  Compare 4096 bytes at 0x0001B000: OK (0)
 SUCCESS: Renamed lpc40xx_application.bin to lpc40xx_application.bin.flashed
 
-
------------------------------
+------------------------------
 Attemping to boot application
   Booting...
 ```
