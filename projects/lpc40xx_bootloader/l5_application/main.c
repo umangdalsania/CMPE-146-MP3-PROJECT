@@ -31,7 +31,7 @@ static void flash__handle_file_renaming(void);
 static void flash__erase_application_flash(void);
 
 static void handle_application_boot(void);
-static const unsigned *application_get_entry_function_address(void);
+static uintptr_t application_get_entry_function_address(void);
 static bool application_is_valid(void);
 static void application_execute(void);
 
@@ -130,7 +130,7 @@ static void flash__write_data(const void *data, size_t data_size_in_bytes, uint3
   }
 }
 
-static void flash__rename_file(const char *old_file, const char * new_file) {
+static void flash__rename_file(const char *old_file, const char *new_file) {
   if (FR_OK == f_rename(old_file, new_file)) {
     printf("INFO: Renamed %s to %s\n", old_file, new_file);
   } else {
@@ -179,8 +179,8 @@ static void handle_application_boot(void) {
 
     application_execute();
   } else {
-    const unsigned *application_entry_point = application_get_entry_function_address();
-    printf("Application entry point: %p: %p\n", application_entry_point, (void *)(*application_entry_point));
+    const uintptr_t application_entry_point = application_get_entry_function_address();
+    printf("Application entry point: 0x%08x\n", application_entry_point);
 
     while (1) {
       puts("ERROR: Application not valid, hence cannot boot to the application");
@@ -191,23 +191,20 @@ static void handle_application_boot(void) {
   }
 }
 
-static const unsigned *application_get_entry_function_address(void) { return (unsigned *)(APP_START_ADDRESS + 4); }
+static uintptr_t application_get_entry_function_address(void) { return *(uintptr_t *)(APP_START_ADDRESS + 4); }
 
 static bool application_is_valid(void) {
-  const unsigned *app_code_start = application_get_entry_function_address();
-
-  return (*app_code_start >= APP_START_ADDRESS) && (*app_code_start <= APP_END_ADDRESS);
+  const uintptr_t app_code_start = application_get_entry_function_address();
+  return (app_code_start >= APP_START_ADDRESS) && (app_code_start <= APP_END_ADDRESS);
 }
 
 static void application_execute(void) {
   // Re-map Interrupt vectors to the user application
   SCB->VTOR = (APP_START_ADDRESS & 0x1FFFFF80);
 
-  // Application code's RESET handler starts at Application Code + 4
-  const unsigned *app_code_start = application_get_entry_function_address();
-
   // Get the function pointer of user application
-  void (*user_code_entry)(void) = (void *)*app_code_start;
+  const uintptr_t app_code_start = application_get_entry_function_address();
+  void (*user_code_entry)(void) = (void *)app_code_start;
 
   // Application flash should have interrupt vector and first entry should be the stack pointer of that application
   const uint32_t stack_pointer_of_application = *(uint32_t *)(APP_START_ADDRESS);
