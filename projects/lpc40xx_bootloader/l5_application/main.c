@@ -22,11 +22,12 @@ static const uint32_t APP_END_ADDRESS = 0x0007FFFF;
 
 static const char *APP_FW_FILENAME = "lpc40xx_application.bin";
 static const char *APP_FW_FILENAME_AFTER_FLASHING = "lpc40xx_application.bin.flashed";
+static const char *APP_FW_FILENAME_OLD = "lpc40xx_application.bin.old";
 
 static bool flash__fw_file_present(const char *filename);
 static void flash__copy_from_sd_card(void);
 static void flash__write_data(const void *data, size_t data_size_in_bytes, uint32_t flash_write_address);
-static void flash__rename_file(void);
+static void flash__handle_file_renaming(void);
 static void flash__erase_application_flash(void);
 
 static void handle_application_boot(void);
@@ -51,7 +52,7 @@ int main(void) {
 
     flash__erase_application_flash();
     flash__copy_from_sd_card();
-    flash__rename_file();
+    flash__handle_file_renaming();
   } else {
     printf("INFO: %s not detected on SD card\n", APP_FW_FILENAME);
   }
@@ -129,12 +130,25 @@ static void flash__write_data(const void *data, size_t data_size_in_bytes, uint3
   }
 }
 
-static void flash__rename_file(void) {
-  if (FR_OK == f_rename(APP_FW_FILENAME, APP_FW_FILENAME_AFTER_FLASHING)) {
-    printf("SUCCESS: Renamed %s to %s\n", APP_FW_FILENAME, APP_FW_FILENAME_AFTER_FLASHING);
+static void flash__rename_file(const char *old_file, const char * new_file) {
+  if (FR_OK == f_rename(old_file, new_file)) {
+    printf("INFO: Renamed %s to %s\n", old_file, new_file);
   } else {
-    printf("ERROR: Failed to rename %s to %s\n", APP_FW_FILENAME, APP_FW_FILENAME_AFTER_FLASHING);
+    printf("ERROR: Failed to rename %s to %s\n", old_file, new_file);
   }
+}
+
+static void flash__handle_file_renaming(void) {
+  // Delete old file because we will rename previous '*.bin.flashed' to '*.bin.old'
+  if (FR_OK == f_unlink(APP_FW_FILENAME_OLD)) {
+    printf("INFO: Deleted %s\n", APP_FW_FILENAME_OLD);
+  }
+
+  // Rename '*.bin.flashed' to '*.bin.old'
+  flash__rename_file(APP_FW_FILENAME_AFTER_FLASHING, APP_FW_FILENAME_OLD);
+
+  // Rename the file we flashed '*.bin' to '*.bin.flashed'
+  flash__rename_file(APP_FW_FILENAME, APP_FW_FILENAME_AFTER_FLASHING);
 }
 
 static void flash__erase_application_flash(void) {
