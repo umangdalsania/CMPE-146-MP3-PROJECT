@@ -6,8 +6,8 @@ from symbol_table import DataType, Symbol, SymbolTable
 
 
 class SymbolTableGenerator(object):
-    def __init__(self, filepath):
-        self._elf_parser = ElfParser(filepath)
+    def __init__(self, elf_file):
+        self._elf_parser = ElfParser(elf_file)
 
         self._symbol_table = self._elf_parser.parse_symbol_table()
         self._dwarf_info = self._elf_parser.parse_dwarf_info()

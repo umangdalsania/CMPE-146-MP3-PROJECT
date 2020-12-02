@@ -21,6 +21,7 @@ References:
 - https://github.com/eliben/pyelftools
 """
 
+
 class ElfParser(object):
     def __init__(self, elf_file):
         self._elf = ELFFile(elf_file)

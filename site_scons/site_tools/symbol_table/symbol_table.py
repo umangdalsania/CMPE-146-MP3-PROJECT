@@ -2,7 +2,7 @@ from enum import Enum
 import json
 
 class DataType(str, Enum):
-    UINTPTR_T   = "uintptr"
+    UINTPTR_T   = "uintptr_t"
     BOOL        = "bool"
     CHAR        = "char"
     FLOAT       = "float"
