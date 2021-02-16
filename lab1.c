@@ -1,6 +1,6 @@
 #include <stdio.h>
 
 int main(void) {
-  printf("Git Merge Conflict!\n");
+  printf("Changes from the Live repo: Merge Conflict!\n");
   return 0;
 }
