@@ -26,7 +26,7 @@
  *                     P R I V A T E    F U N C T I O N S
  *
  ******************************************************************************/
-static const app_cli__command_s *app_cli__private_find_command(const app_cli_s *cli, const sl_string_t input_string) {
+static const app_cli__command_s *app_cli__private_find_command(const app_cli_s *cli, const sl_string_s input_string) {
   app_cli__command_s *iterator = cli->commands_head_pointer;
   while (NULL != iterator) {
     if (sl_string__begins_with_whole_word(input_string, iterator->command_name, " ")) {
@@ -40,7 +40,7 @@ static const app_cli__command_s *app_cli__private_find_command(const app_cli_s *
 }
 
 static const app_cli__command_s *app_cli__private_find_short_command(const app_cli_s *cli,
-                                                                     const sl_string_t input_string) {
+                                                                     const sl_string_s input_string) {
   app_cli__command_s *iterator = cli->commands_head_pointer;
 
   while (NULL != iterator) {
@@ -60,25 +60,25 @@ static const app_cli__command_s *app_cli__private_find_short_command(const app_c
 }
 
 static void app_cli__private_handle_command(app_cli_s *cli, const app_cli__command_s *command,
-                                            app_cli__argument_t cli_argument, sl_string_t input_string) {
+                                            app_cli__argument_t cli_argument, sl_string_s input_string) {
   (void)sl_string__erase_first_word(input_string, ' ');
   const app_cli_status_e command_status = command->app_cli_handler(cli_argument, input_string, cli->output_function);
 
   if (APP_CLI_STATUS__SUCCESS != command_status) {
-    sl_string_t output_string = input_string; // re-use
+    sl_string_s output_string = input_string; // re-use
 
     (void)sl_string__insert_at(output_string, 0, "Command failed: ");
-    cli->output_function(cli_argument, output_string);
+    cli->output_function(cli_argument, sl_string__c_str(output_string));
 
     (void)sl_string__printf(output_string, "\r\nCommand help message: %s\r\n", command->help_message_for_command);
-    cli->output_function(cli_argument, output_string);
+    cli->output_function(cli_argument, sl_string__c_str(output_string));
   }
 }
 
 static void app_cli__private_print_list_of_all_commands(const app_cli_s *cli, app_cli__argument_t cli_argument,
-                                                        sl_string_t output) {
+                                                        sl_string_s output) {
   (void)sl_string__printf(output, "\r\nList of commands (use help <name> to get full help if you see ...): \r\n");
-  cli->output_function(cli_argument, output);
+  cli->output_function(cli_argument, sl_string__c_str(output));
 
   const size_t max_help_chars_to_print = 50;
   app_cli__command_s *iterator = cli->commands_head_pointer;
@@ -98,14 +98,14 @@ static void app_cli__private_print_list_of_all_commands(const app_cli_s *cli, ap
     }
 
     (void)sl_string__append(output, "\r\n");
-    cli->output_function(cli_argument, output);
+    cli->output_function(cli_argument, sl_string__c_str(output));
 
     iterator = iterator->pointer_of_next_command;
   }
 }
 
 static void app_cli__private_handle_help(const app_cli_s *cli, app_cli__argument_t cli_argument,
-                                         sl_string_t command_string) {
+                                         sl_string_s command_string) {
   // 'help' without any command name means list all commands
   if (sl_string__equals_to_ignore_case(command_string, "help")) {
     app_cli__private_print_list_of_all_commands(cli, cli_argument, command_string);
@@ -121,7 +121,7 @@ static void app_cli__private_handle_help(const app_cli_s *cli, app_cli__argument
 
     if (NULL == cli_command) {
       (void)sl_string__insert_at(command_string, 0, "ERROR: Could not find help for command: ");
-      cli->output_function(cli_argument, command_string);
+      cli->output_function(cli_argument, sl_string__c_str(command_string));
     } else {
       cli->output_function(cli_argument, cli_command->help_message_for_command);
     }
@@ -130,16 +130,16 @@ static void app_cli__private_handle_help(const app_cli_s *cli, app_cli__argument
 }
 
 static void app_cli__private_handle_unmatched_command(const app_cli_s *cli, app_cli__argument_t cli_argument,
-                                                      sl_string_t input_string) {
-  sl_string_t output_string = input_string; // re-use
+                                                      sl_string_s input_string) {
+  sl_string_s output_string = input_string; // re-use
 
   (void)sl_string__insert_at(output_string, 0, "Unable to match any registered CLI command for: ");
-  cli->output_function(cli_argument, output_string);
+  cli->output_function(cli_argument, sl_string__c_str(output_string));
 
   app_cli__private_print_list_of_all_commands(cli, cli_argument, output_string);
 }
 
-static void app_cli__private_process_input(app_cli_s *cli, app_cli__argument_t cli_argument, sl_string_t input_string) {
+static void app_cli__private_process_input(app_cli_s *cli, app_cli__argument_t cli_argument, sl_string_s input_string) {
   const app_cli__command_s *command = app_cli__private_find_command(cli, input_string);
 
   // If full command not matched, then try matching short command
@@ -181,7 +181,7 @@ void app_cli__add_command_handler(app_cli_s *cli, app_cli__command_s *app_cli_co
   }
 }
 
-void app_cli__process_input(app_cli_s *cli, app_cli__argument_t cli_argument, sl_string_t input_string) {
+void app_cli__process_input(app_cli_s *cli, app_cli__argument_t cli_argument, sl_string_s input_string) {
   (void)sl_string__trim_end(input_string, "\r\n");
 
   if (sl_string__begins_with_ignore_case(input_string, "help")) {

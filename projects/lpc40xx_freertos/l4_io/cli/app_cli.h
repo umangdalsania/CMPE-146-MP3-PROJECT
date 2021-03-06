@@ -108,7 +108,7 @@ typedef struct app_cli__command_s {
    *
    * @returns true if command was successful, otherwise the CLI will print an error for you
    */
-  app_cli_status_e (*app_cli_handler)(app_cli__argument_t argument, sl_string_t user_input_minus_command_name,
+  app_cli_status_e (*app_cli_handler)(app_cli__argument_t argument, sl_string_s user_input_minus_command_name,
                                       app_cli__print_string_function output_function);
 
   struct app_cli__command_s *pointer_of_next_command; ///< User should not use this member
@@ -172,7 +172,7 @@ void app_cli__add_command_handler(app_cli_s *cli, app_cli__command_s *app_cli_co
  * Since this string is re-used for output, CLI itself needs around 128 bytes, but if one of the
  * CLI handlers also use re-use it, then size it according to your requirement
  */
-void app_cli__process_input(app_cli_s *cli, app_cli__argument_t cli_argument, sl_string_t input_string);
+void app_cli__process_input(app_cli_s *cli, app_cli__argument_t cli_argument, sl_string_s input_string);
 
 #ifdef __cplusplus
 } /* extern "C" */

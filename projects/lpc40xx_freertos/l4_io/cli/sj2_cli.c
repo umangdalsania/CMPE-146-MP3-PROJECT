@@ -10,8 +10,8 @@
 /// Output all CLI to the standard output
 static void sj2_cli__output_function(app_cli__argument_t argument, const char *string);
 static void sj2_cli__task(void *p);
-static void sj2_cli__get_line(sl_string_t input_line);
-static void sj2_cli__handle_backspace_logic(sl_string_t input_line, char input_byte);
+static void sj2_cli__get_line(sl_string_s input_line);
+static void sj2_cli__handle_backspace_logic(sl_string_s input_line, char input_byte);
 
 void sj2_cli__init(void) {
   const char *separator = "--------------------------------------------------------------------------------\r\n";
@@ -65,7 +65,7 @@ static void sj2_cli__task(void *task_parameter) {
   char string_memory[128];
 
   // Start by greeting the use with the 'help' command
-  sl_string_t user_input = sl_string__initialize_from(string_memory, sizeof(string_memory), "help");
+  sl_string_s user_input = sl_string__initialize_from(string_memory, sizeof(string_memory), "help");
 
   while (true) {
     app_cli__process_input(sj2_cli_struct, unused_cli_param, user_input);
@@ -73,7 +73,7 @@ static void sj2_cli__task(void *task_parameter) {
   }
 }
 
-static void sj2_cli__get_line(sl_string_t input_line) {
+static void sj2_cli__get_line(sl_string_s input_line) {
   sl_string__clear(input_line);
 
   // As long as user does not enter a full line, continue to get input
@@ -87,7 +87,7 @@ static void sj2_cli__get_line(sl_string_t input_line) {
   }
 }
 
-static void sj2_cli__handle_backspace_logic(sl_string_t input_line, char input_byte) {
+static void sj2_cli__handle_backspace_logic(sl_string_s input_line, char input_byte) {
   const char backspace = '\b';
 
   if (backspace == input_byte) {
