@@ -5,6 +5,7 @@ import os
 
 SELF_DIR = Dir(os.path.dirname(__file__))
 GENERATE_SYMBOL_TABLE_PY = SELF_DIR.File("generate_symbol_table.py")
+GENERATE_C_SYMBOL_TABLE_PY = SELF_DIR.File("generate_c_symbol_table.py")
 
 
 """
@@ -14,6 +15,7 @@ SCons tools functions
 
 def generate(env):
     env.AddMethod(symbol_table_generator_method, "SymbolTableGenerator")
+    env.AddMethod(symbol_table_c_generator_method, "SymbolTableCodeGenerator")
 
 
 def exists(env):
@@ -39,5 +41,27 @@ def symbol_table_generator_method(env, source, target):
     command = " ".join(command)
 
     result = env.Command(action=command, source=elf_filenode.abspath, target=output_filenodes)
+
+    return result
+
+def symbol_table_c_generator_method(env, source, target):
+    target = Dir(target)
+    json_filenode = File(source[0])
+
+    env.Append(CPPPATH=[target.abspath])
+
+    basename, _ = os.path.splitext(json_filenode.name)
+    output_filenode = target.File("{}.{}".format(basename, "c"))
+
+    command = [
+        "python",
+        GENERATE_C_SYMBOL_TABLE_PY.abspath,
+        "$SOURCE",
+        "--output=$TARGET",
+    ]
+
+    command = " ".join(command)
+
+    result = env.Command(action=command, source=json_filenode.abspath, target=output_filenode)
 
     return result

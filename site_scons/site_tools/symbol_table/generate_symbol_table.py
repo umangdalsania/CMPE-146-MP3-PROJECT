@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 
+from color import ColorString
 from symbol_table_generator import SymbolTableGenerator
 from symbol_table import SymbolTableContainer
 
@@ -29,7 +30,7 @@ def main():
     json_output, log_output = args.output if len(args.output) > 1 else ("".join(args.output), None)
 
     elf_filename = os.path.basename(elf_filepath)
-    basename, ext = os.path.splitext(os.path.basename(elf_filepath))
+    basename, ext = os.path.splitext(os.path.basename(json_output))
     json_filename = "{}.json".format(basename)
 
     if os.path.isdir(json_output) or "." not in os.path.basename(json_output):
@@ -57,15 +58,15 @@ def main():
     with open(elf_filepath,"rb") as file:
         symbol_table_generator = SymbolTableGenerator(file)
 
-    message = "Generating Symbol Table [{}] -> [{}]".format(elf_filename, json_filename)
-    print(message)
+        message = "Generating Symbol Table [{}] -> [{}]".format(elf_filename, json_filename)
+        print(ColorString(message).green)
 
-    symbol_table = symbol_table_generator.generate_symbol_table()
-    symbol_table_container = SymbolTableContainer(symbol_table)
-    serialized_data = symbol_table_container.serialize()
+        symbol_table = symbol_table_generator.generate_symbol_table()
+        symbol_table_container = SymbolTableContainer(symbol_table)
+        serialized_data = symbol_table_container.serialize()
 
-    with open(json_filepath, "w") as file:
-        json.dump(serialized_data, file, indent=4)
+        with open(json_filepath, "w") as file:
+            json.dump(serialized_data, file, indent=4)
 
     return 0
 

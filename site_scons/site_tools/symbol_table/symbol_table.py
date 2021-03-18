@@ -97,5 +97,7 @@ class SymbolTableContainer:
         ADDRESS_SIZE = 4
         DATA_ENUM_SIZE = 4
         DATA_SIZE = 4
+        BIT_SIZE_SIZE = 4
+        BIT_OFFSET_SIZE = 4
 
-        return (NAME_SIZE + ADDRESS_SIZE + DATA_ENUM_SIZE + DATA_SIZE) * len(self.symbol_table)
+        return (NAME_SIZE + ADDRESS_SIZE + DATA_ENUM_SIZE + DATA_SIZE + BIT_SIZE_SIZE + BIT_OFFSET_SIZE) * len(self.symbol_table)

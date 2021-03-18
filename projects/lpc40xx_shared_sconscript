@@ -11,6 +11,7 @@ dbc_node_name = GetOption("dbc_node_name")
 no_clang_format = GetOption("no_clang_format")
 no_unit_test = GetOption("no_unit_test")
 test_output = GetOption("test_output")
+no_symbol_table = GetOption("no_symbol_table")
 timeout = GetOption("timeout")
 verbose = GetOption("verbose")
 
@@ -31,6 +32,7 @@ UNIT_TEST_BUILD_DIR = VARIANT_DIR.Dir("test")
 AUTO_GENERATED_CODE_DIR = VARIANT_DIR.Dir("auto_generated")
 MOCK_DIR = project_dirnode.Dir("unittest_header_overrides")
 DBC_DIRS = Dir("#/dbc")
+SYMBOL_TABLE_DIR = VARIANT_DIR.Dir("symbol_table")
 
 """
 Import build environment
@@ -88,3 +90,23 @@ if not no_unit_test:
         verbose=verbose,
     )
     Requires(artifacts.object_filenodes, unit_test_results)
+
+    """
+Symbol table
+"""
+if not no_symbol_table:
+    symbol_table_generator_results = env_arm.SymbolTableGenerator(source=artifacts.elf_filenode, target=SYMBOL_TABLE_DIR)
+    Depends(symbol_table_generator_results, artifacts.elf_filenode)
+
+    symbol_table_code_generator_results = env_arm.SymbolTableCodeGenerator(source=symbol_table_generator_results, target=SYMBOL_TABLE_DIR)
+    Depends(symbol_table_code_generator_results, symbol_table_generator_results)
+
+    symbol_table_source = File(symbol_table_code_generator_results[0])
+    sources.source_filenodes.append(symbol_table_source)
+
+    symbol_table_artifacts = environment_builder.build(
+        base_filename=fsops.basename(symbol_table_source),
+        output_dirnode=VARIANT_DIR,
+        sources=sources,
+    )
+    Depends(symbol_table_artifacts.elf_filenode, symbol_table_code_generator_results)
