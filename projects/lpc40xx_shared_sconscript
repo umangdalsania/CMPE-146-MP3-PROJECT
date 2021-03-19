@@ -91,7 +91,7 @@ if not no_unit_test:
     )
     Requires(artifacts.object_filenodes, unit_test_results)
 
-    """
+"""
 Symbol table
 """
 if not no_symbol_table:

@@ -30,7 +30,7 @@ def main():
     json_filename = os.path.basename(json_filepath)
     basename, ext = os.path.splitext(os.path.basename(json_filepath))
     c_filename = "{}.c".format(basename)
-    print(c_output)
+
     if os.path.isdir(c_output) or "." not in os.path.basename(c_output):
         c_filepath = os.path.join(c_output, c_filename)
     else:

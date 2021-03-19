@@ -96,7 +96,7 @@ app_cli_status_e cli__symbol_lookup(app_cli__argument_t argument, sl_string_t us
 
     sl_string__printf(output_string, "Symbol %s: ", user_input_minus_command_name);
     cli_output(NULL, output_string);
-    symbol_table__get_symbol_data(symbol, output_string);
+    (void)symbol_table__get_symbol_data(symbol, output_string);
     cli_output(NULL, output_string);
   } else {
     sl_string__printf(output_string, "Unable to find %s in symbol table\n", user_input_minus_command_name);
