@@ -8,6 +8,8 @@
 #define configMEMMANG_SELECTION 3
 #endif
 
+#if (0 != configSUPPORT_DYNAMIC_ALLOCATION)
+
 /**
  * All the "heap" implementation files below were re-named from FreeRTOS source *.c to *.inc
  * *.inc is not included in the scons build system so this is a trick
@@ -23,4 +25,6 @@
 #include "heap_4.c.inc"
 #else
 #include "heap_5.c.inc"
+#endif
+
 #endif

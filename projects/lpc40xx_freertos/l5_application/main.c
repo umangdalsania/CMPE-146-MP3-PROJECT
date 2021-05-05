@@ -38,15 +38,21 @@ static void create_blinky_tasks(void) {
   // These variables should not go out of scope because the 'blink_task' will reference this memory
   static gpio_s led0, led1;
 
+  // If you wish to avoid malloc, use xTaskCreateStatic() in place of xTaskCreate()
+  static StackType_t led0_task_stack[512 / sizeof(StackType_t)];
+  static StackType_t led1_task_stack[512 / sizeof(StackType_t)];
+  static StaticTask_t led0_task_struct;
+  static StaticTask_t led1_task_struct;
+
   led0 = board_io__get_led0();
   led1 = board_io__get_led1();
 
-  xTaskCreate(blink_task, "led0", configMINIMAL_STACK_SIZE, (void *)&led0, PRIORITY_LOW, NULL);
-  xTaskCreate(blink_task, "led1", configMINIMAL_STACK_SIZE, (void *)&led1, PRIORITY_LOW, NULL);
+  xTaskCreateStatic(blink_task, "led0", ARRAY_SIZE(led0_task_stack), (void *)&led0, PRIORITY_LOW, led0_task_stack,
+                    &led0_task_struct);
+  xTaskCreateStatic(blink_task, "led1", ARRAY_SIZE(led1_task_stack), (void *)&led1, PRIORITY_LOW, led1_task_stack,
+                    &led1_task_struct);
 #else
-  const bool run_1000hz = true;
-  const size_t stack_size_bytes = 2048 / sizeof(void *); // RTOS stack size is in terms of 32-bits for ARM M4 32-bit CPU
-  periodic_scheduler__initialize(stack_size_bytes, !run_1000hz); // Assuming we do not need the high rate 1000Hz task
+  periodic_scheduler__initialize();
   UNUSED(blink_task);
 #endif
 }

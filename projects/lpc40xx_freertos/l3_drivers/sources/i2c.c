@@ -100,7 +100,8 @@ static void i2c2_isr(void) { i2c__handle_interrupt(&i2c_structs[I2C__2]); }
  *
  ******************************************************************************/
 
-void i2c__initialize(i2c_e i2c_number, uint32_t desired_i2c_bus_speed_in_hz, uint32_t peripheral_clock_hz) {
+void i2c__initialize(i2c_e i2c_number, uint32_t desired_i2c_bus_speed_in_hz, uint32_t peripheral_clock_hz,
+                     StaticSemaphore_t *binary_sem_struct, StaticSemaphore_t *mutex_struct) {
   const function__void_f isrs[] = {i2c0_isr, i2c1_isr, i2c2_isr};
   const lpc_peripheral_e peripheral_ids[] = {LPC_PERIPHERAL__I2C0, LPC_PERIPHERAL__I2C1, LPC_PERIPHERAL__I2C2};
 
@@ -114,8 +115,9 @@ void i2c__initialize(i2c_e i2c_number, uint32_t desired_i2c_bus_speed_in_hz, uin
 
   // Create binary semaphore and mutex. We deliberately use non static memory
   // allocation because we do not want to statically define memory for all I2C buses
-  i2c->transfer_complete_signal = xSemaphoreCreateBinary();
-  i2c->mutex = xSemaphoreCreateMutex();
+  i2c->transfer_complete_signal = xSemaphoreCreateBinaryStatic(binary_sem_struct);
+
+  i2c->mutex = xSemaphoreCreateMutexStatic(mutex_struct);
   vTraceSetMutexName(i2c->mutex, "i2c_mutex");
 
   // Optional: Provide names of the FreeRTOS objects for the Trace Facility

@@ -36,6 +36,7 @@ extern "C" {
  ******************************************************************************/
 typedef void *TaskFunction_t;
 typedef void *TaskHandle_t;
+typedef void *StaticTask_t;
 typedef uint32_t configSTACK_DEPTH_TYPE;
 
 /*******************************************************************************
@@ -58,6 +59,12 @@ BaseType_t xTaskCreate(
     const char *const pcName, /*lint !e971 Unqualified char types are allowed for strings and single characters only. */
     const configSTACK_DEPTH_TYPE usStackDepth, void *const pvParameters, UBaseType_t uxPriority,
     TaskHandle_t *const pxCreatedTask);
+
+TaskHandle_t xTaskCreateStatic(
+    TaskFunction_t pxTaskCode,
+    const char *const pcName, /*lint !e971 Unqualified char types are allowed for strings and single characters only. */
+    const uint32_t ulStackDepth, void *const pvParameters, UBaseType_t uxPriority, StackType_t *const puxStackBuffer,
+    StaticTask_t *const pxTaskBuffer);
 
 #ifdef __cplusplus
 } /* extern "C" */

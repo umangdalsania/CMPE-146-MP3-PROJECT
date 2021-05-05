@@ -71,7 +71,8 @@ int ff_cre_syncobj (	/* 1:Function succeeded, 0:Could not create the sync object
 //	return (int)(err == OS_NO_ERR);
 
 	/* FreeRTOS */
-	*sobj = xSemaphoreCreateMutex();
+	static StaticSemaphore_t mutex_struct;
+	*sobj = xSemaphoreCreateMutexStatic(&mutex_struct);
 	vTraceSetMutexName(*sobj, "fatfs");
 	return (int)(*sobj != NULL);
 

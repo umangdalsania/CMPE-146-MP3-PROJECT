@@ -1,9 +1,11 @@
+#include "periodic_callbacks.h"
+
 #include <stdbool.h>
 
 #include "FreeRTOS.h"
 #include "task.h"
 
-#include "periodic_callbacks.h"
+#include "common_macros.h"
 
 /// Task data structure of each periodic task
 typedef struct {
@@ -78,18 +80,36 @@ static void periodic_scheduler__task_monitor(void *param) {
   }
 }
 
-void periodic_scheduler__initialize(uint32_t task_stack_size, bool run_1000hz) {
-  xTaskCreate(periodic_scheduler__1Hz_task, "1Hz", task_stack_size, NULL, PRIORITY_PERIODIC_1HZ, NULL);
-  xTaskCreate(periodic_scheduler__10Hz_task, "10Hz", task_stack_size, NULL, PRIORITY_PERIODIC_10HZ, NULL);
-  xTaskCreate(periodic_scheduler__100Hz_task, "100Hz", task_stack_size, NULL, PRIORITY_PERIODIC_100HZ, NULL);
+void periodic_scheduler__initialize(void) {
+  /* You can modify these stack sizes to suit your needs
+   * Generally, you should not need higher than 4k stack size as you should not allocate
+   * large data objects on the stack memory
+   */
 
-  // Only create the 1Khz task if enabled
-  periodic_scheduler__run_1000hz = run_1000hz;
-  if (periodic_scheduler__run_1000hz) {
-    xTaskCreate(periodic_scheduler__1000Hz_task, "1000Hz", task_stack_size, NULL, PRIORITY_PERIODIC_1000HZ, NULL);
-  }
+  static StackType_t hz1_stack[4096 / sizeof(StackType_t)];
+  static StackType_t hz10_stack[4096 / sizeof(StackType_t)];
+  static StackType_t hz100_stack[4096 / sizeof(StackType_t)];
+  static StaticTask_t hz1_struct, hz10_struct, hz100_struct;
 
-  xTaskCreate(periodic_scheduler__task_monitor, "Hz_wdt", task_stack_size, NULL, PRIORITY_PERIODIC_MONITOR, NULL);
+  // clang-format off
+  xTaskCreateStatic(periodic_scheduler__1Hz_task, "1Hz", ARRAY_SIZE(hz1_stack), NULL, PRIORITY_PERIODIC_1HZ, hz1_stack, &hz1_struct);
+  xTaskCreateStatic(periodic_scheduler__10Hz_task, "10Hz", ARRAY_SIZE(hz10_stack), NULL, PRIORITY_PERIODIC_10HZ, hz10_stack, &hz10_struct);
+  xTaskCreateStatic(periodic_scheduler__100Hz_task, "100Hz", ARRAY_SIZE(hz100_stack), NULL, PRIORITY_PERIODIC_100HZ, hz100_stack, &hz100_struct);
+  // clang-format on
+
+  static StackType_t wdt_stack[1024 / sizeof(StackType_t)];
+  static StaticTask_t wdt_struct;
+  xTaskCreateStatic(periodic_scheduler__task_monitor, "Hz_wdt", ARRAY_SIZE(wdt_stack), NULL, PRIORITY_PERIODIC_MONITOR,
+                    wdt_stack, &wdt_struct);
 
   periodic_callbacks__initialize();
+}
+
+void periodic_scheduler__initialize_with_1khz(void) {
+  static StackType_t hz1000_stack[4096 / sizeof(StackType_t)];
+  static StaticTask_t hz1000_struct;
+  xTaskCreateStatic(periodic_scheduler__1000Hz_task, "1000Hz", ARRAY_SIZE(hz1000_stack), NULL, PRIORITY_PERIODIC_1000HZ,
+                    hz1000_stack, &hz1000_struct);
+
+  periodic_scheduler__initialize();
 }

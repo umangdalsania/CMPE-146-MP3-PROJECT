@@ -43,6 +43,12 @@
 
 #define configMAX_TASK_NAME_LEN                 (12)
 #define configIDLE_SHOULD_YIELD                 1
+
+/* Dynamic allocation is discouraged, and users are encouraged to use 'static' based APIs
+ * such as using 'xQueueCreateStatic()' in place of 'xQueueCreate()'
+ *
+ * But this is enabled to provide convenience to students who use this project
+ */
 #define configSUPPORT_DYNAMIC_ALLOCATION        1
 #define configSUPPORT_STATIC_ALLOCATION         1
 

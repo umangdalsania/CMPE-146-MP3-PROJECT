@@ -84,7 +84,13 @@ static void peripherals_init__uart0_init(void) {
 
 static void peripherals_init__i2c_init(void) {
   const uint32_t i2c_speed_hz = UINT32_C(400) * 1000;
-  i2c__initialize(I2C__2, i2c_speed_hz, clock__get_peripheral_clock_hz());
+
+  /* I2C driver initialization requires memory of binary semaphore and mutex provided by the user
+   * This should not go out of scope, and hence is 'static'
+   */
+  static StaticSemaphore_t binary_semaphore_struct;
+  static StaticSemaphore_t mutex_struct;
+  i2c__initialize(I2C__2, i2c_speed_hz, clock__get_peripheral_clock_hz(), &binary_semaphore_struct, &mutex_struct);
 
   for (unsigned slave_address = 2; slave_address <= 254; slave_address += 2) {
     if (i2c__detect(I2C__2, slave_address)) {

@@ -27,18 +27,34 @@ void setUp(void) {}
 void tearDown(void) {}
 
 void test_periodic_scheduler__initialize(void) {
-  const size_t stack_size = 1024;
+  const uint32_t stack_size = 1024;
+  const TaskHandle_t returned_task_handle = NULL;
 
-  xTaskCreate_ExpectAndReturn(periodic_scheduler__1Hz_task, "1Hz", stack_size, NULL, PRIORITY_PERIODIC_1HZ, NULL, 0);
-  xTaskCreate_ExpectAndReturn(periodic_scheduler__10Hz_task, "10Hz", stack_size, NULL, PRIORITY_PERIODIC_10HZ, NULL, 0);
-  xTaskCreate_ExpectAndReturn(periodic_scheduler__100Hz_task, "100Hz", stack_size, NULL, PRIORITY_PERIODIC_100HZ, NULL,
-                              0);
-  xTaskCreate_ExpectAndReturn(periodic_scheduler__1000Hz_task, "1000Hz", stack_size, NULL, PRIORITY_PERIODIC_1000HZ,
-                              NULL, 0);
+  xTaskCreateStatic_ExpectAndReturn(periodic_scheduler__1000Hz_task, "1000Hz", stack_size, NULL,
+                                    PRIORITY_PERIODIC_1000HZ, NULL, NULL, returned_task_handle);
+  xTaskCreateStatic_IgnoreArg_puxStackBuffer();
+  xTaskCreateStatic_IgnoreArg_pxTaskBuffer();
 
-  xTaskCreate_ExpectAndReturn(periodic_scheduler__task_monitor, "Hz_wdt", stack_size, NULL, PRIORITY_PERIODIC_MONITOR,
-                              NULL, 0);
+  xTaskCreateStatic_ExpectAndReturn(periodic_scheduler__1Hz_task, "1Hz", stack_size, NULL, PRIORITY_PERIODIC_1HZ, NULL,
+                                    NULL, returned_task_handle);
+  xTaskCreateStatic_IgnoreArg_puxStackBuffer();
+  xTaskCreateStatic_IgnoreArg_pxTaskBuffer();
+
+  xTaskCreateStatic_ExpectAndReturn(periodic_scheduler__10Hz_task, "10Hz", stack_size, NULL, PRIORITY_PERIODIC_10HZ,
+                                    NULL, NULL, returned_task_handle);
+  xTaskCreateStatic_IgnoreArg_puxStackBuffer();
+  xTaskCreateStatic_IgnoreArg_pxTaskBuffer();
+
+  xTaskCreateStatic_ExpectAndReturn(periodic_scheduler__100Hz_task, "100Hz", stack_size, NULL, PRIORITY_PERIODIC_100HZ,
+                                    NULL, NULL, returned_task_handle);
+  xTaskCreateStatic_IgnoreArg_puxStackBuffer();
+  xTaskCreateStatic_IgnoreArg_pxTaskBuffer();
+
+  xTaskCreateStatic_ExpectAndReturn(periodic_scheduler__task_monitor, "Hz_wdt", stack_size / 4, NULL,
+                                    PRIORITY_PERIODIC_MONITOR, NULL, NULL, returned_task_handle);
+  xTaskCreateStatic_IgnoreArg_puxStackBuffer();
+  xTaskCreateStatic_IgnoreArg_pxTaskBuffer();
 
   periodic_callbacks__initialize_Expect();
-  periodic_scheduler__initialize(stack_size, true);
+  periodic_scheduler__initialize_with_1khz();
 }
