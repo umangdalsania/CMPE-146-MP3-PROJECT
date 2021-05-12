@@ -28,8 +28,8 @@ typedef struct {
   size_t bit_offset;
 } symbol_table__symbol_s;
 
-const symbol_table__symbol_s *symbol_table__lookup_symbol(const sl_string_t symbol_name);
-sl_string_size_t symbol_table__get_symbol_data(const symbol_table__symbol_s *symbol, sl_string_t output);
+const symbol_table__symbol_s *symbol_table__lookup_symbol(const sl_string_s symbol_name);
+size_t symbol_table__get_symbol_data(const symbol_table__symbol_s *symbol, sl_string_s output);
 
 extern const size_t symbol_table__size;
 extern const symbol_table__symbol_s *symbol_table__base;

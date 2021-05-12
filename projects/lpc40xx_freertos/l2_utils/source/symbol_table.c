@@ -5,9 +5,10 @@
 const size_t symbol_table__size __attribute__((section(".symbol_table_size"), weak));
 const symbol_table__symbol_s *symbol_table__base __attribute__((section(".symbol_table_base"), weak));
 
-const symbol_table__symbol_s *symbol_table__lookup_symbol(const sl_string_t symbol_name) {
+const symbol_table__symbol_s *symbol_table__lookup_symbol(const sl_string_s symbol_name) {
   const symbol_table__symbol_s *symbol = NULL;
-  if (NULL != symbol_name) {
+  const char *name = sl_string__c_str(symbol_name);
+  if (NULL != name) {
     bool symbol_found = false;
     size_t index = 0;
     const symbol_table__symbol_s *symbol_ptr = symbol_table__base;
@@ -23,8 +24,8 @@ const symbol_table__symbol_s *symbol_table__lookup_symbol(const sl_string_t symb
   return symbol;
 }
 
-sl_string_size_t symbol_table__get_symbol_data(const symbol_table__symbol_s *symbol, sl_string_t output) {
-  sl_string_size_t string_size = 0U;
+size_t symbol_table__get_symbol_data(const symbol_table__symbol_s *symbol, sl_string_s output) {
+  size_t string_size = 0U;
   if (NULL != symbol) {
     const size_t BITS_IN_BYTE = 8U;
 

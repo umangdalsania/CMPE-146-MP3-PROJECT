@@ -87,20 +87,21 @@ static void cli__task_list_print(sl_string_s output_string, app_cli__print_strin
 #endif
 }
 
-app_cli_status_e cli__symbol_lookup(app_cli__argument_t argument, sl_string_t user_input_minus_command_name,
+app_cli_status_e cli__symbol_lookup(app_cli__argument_t argument, sl_string_s user_input_minus_command_name,
                                     app_cli__print_string_function cli_output) {
   char string_memory[128];
-  sl_string_t output_string = sl_string__initialize(string_memory, sizeof(string_memory));
+  sl_string_s output_string = sl_string__initialize(string_memory, sizeof(string_memory));
   const symbol_table__symbol_s *symbol = symbol_table__lookup_symbol(user_input_minus_command_name);
   if (NULL != symbol) {
 
-    sl_string__printf(output_string, "Symbol %s: ", user_input_minus_command_name);
-    cli_output(NULL, output_string);
+    sl_string__printf(output_string, "Symbol %s: ", sl_string__c_str(user_input_minus_command_name));
+    cli_output(NULL, sl_string__c_str(output_string));
     (void)symbol_table__get_symbol_data(symbol, output_string);
-    cli_output(NULL, output_string);
+    cli_output(NULL, sl_string__c_str(output_string));
   } else {
-    sl_string__printf(output_string, "Unable to find %s in symbol table\n", user_input_minus_command_name);
-    cli_output(NULL, output_string);
+    sl_string__printf(output_string, "Unable to find %s in symbol table\n",
+                      sl_string__c_str(user_input_minus_command_name));
+    cli_output(NULL, sl_string__c_str(output_string));
   }
   return APP_CLI_STATUS__SUCCESS;
 }

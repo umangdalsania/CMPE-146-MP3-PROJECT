@@ -40,7 +40,7 @@ void sj2_cli__init(void) {
   static app_cli__command_s symbol_table = {.command_name = "symbol",
                                             .help_message_for_command =
                                                 "Outputs symbol value.\n"
-                                                "symbol <symbol_name>' will display symbol value.",
+                                                "symbol <symbol_name> will display symbol value.",
                                             .app_cli_handler = cli__symbol_lookup};
 
   // Add your CLI commands in descending sorted order to make them appear in sorted order
