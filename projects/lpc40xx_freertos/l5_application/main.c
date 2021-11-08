@@ -53,7 +53,7 @@ static void mp3_reader_task(void *p) {
   UINT Bytes_Read;
 
   while (1) {
-    xQueueReceive(Q_songname, &name.song_name, portMAX_DELAY);
+    xQueueReceive(Q_songname, name.song_name, portMAX_DELAY);
     fprintf(stderr, "Received song to play: %s\n", name.song_name);
 
     if (open_file(&file_handler, name.song_name)) {
@@ -67,7 +67,7 @@ static void mp3_player_task(void *p) {
   char bytes_512[512];
 
   while (1) {
-    if (xQueueReceive(Q_songdata, &bytes_512, portMAX_DELAY)) {
+    if (xQueueReceive(Q_songdata, bytes_512, portMAX_DELAY)) {
       fprintf(stderr, "Received Data!\n");
     }
     // for (int i = 0; i < sizeof(bytes_512); i++) {
