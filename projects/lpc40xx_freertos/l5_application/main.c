@@ -104,6 +104,7 @@ void read_from_file(FIL *file_handler, char *buffer, UINT *Bytes_Read) {
   printf("Bytes Read: %i\n", *Bytes_Read);
 
   while (1) {
+    if(uxQueueMessagesWaiting( Q_songname ) == 0){
     f_read(file_handler, buffer, sizeof(songdata_t), Bytes_Read);
     printf("Bytes Read: %i\n", *Bytes_Read);
 
@@ -111,5 +112,8 @@ void read_from_file(FIL *file_handler, char *buffer, UINT *Bytes_Read) {
       break;
 
     xQueueSend(Q_songdata, buffer, portMAX_DELAY);
+    }
+    else 
+      break;
   }
 }
