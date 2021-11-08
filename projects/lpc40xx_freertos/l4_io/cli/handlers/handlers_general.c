@@ -2,6 +2,7 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
+#include <stdio.h>
 
 #include "uart_printf.h"
 
@@ -36,6 +37,25 @@ app_cli_status_e cli__task_list(app_cli__argument_t argument, sl_string_s user_i
   // re-use user_input_minus_command_name as 'output_string' to save memory:
   sl_string_s output_string = user_input_minus_command_name;
   cli__task_list_print(output_string, cli_output);
+
+  return APP_CLI_STATUS__SUCCESS;
+}
+
+extern QueueHandle_t Q_songname;
+app_cli_status_e cli__mp3(app_cli__argument_t argument, sl_string_s user_input_minus_command_name,
+                          app_cli__print_string_function cli_output) {
+
+  // user_input_minus_command_name is actually a 'char *' pointer type
+  // We tell the Queue to copy 32 bytes of songname from this location
+
+  if (sl_string__begins_with_ignore_case(user_input_minus_command_name, "play")) {
+    sl_string__erase_first_word(user_input_minus_command_name, ' ');
+
+    xQueueSend(Q_songname, user_input_minus_command_name.cstring, portMAX_DELAY);
+  }
+
+  else
+    cli_output(NULL, "Invalid Task. Please use 'help mp3' for supported functionalities.\n");
 
   return APP_CLI_STATUS__SUCCESS;
 }

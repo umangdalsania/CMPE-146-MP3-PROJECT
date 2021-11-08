@@ -38,11 +38,17 @@ void sj2_cli__init(void) {
                                              "tasklist <time>' will display CPU utilization within this time window.",
                                          .app_cli_handler = cli__task_list};
 
+  static app_cli__command_s mp3 = {.command_name = "mp3",
+                                   .help_message_for_command = "Supports the following Functions: \n"
+                                                               "mp3 play <songname.mp3> -> Plays Requested Song",
+                                   .app_cli_handler = cli__mp3};
+
   // Add your CLI commands in descending sorted order to make them appear in sorted order
   app_cli__add_command_handler(&sj2_cli_struct, &uart3_transmit);
   app_cli__add_command_handler(&sj2_cli_struct, &task_list);
   app_cli__add_command_handler(&sj2_cli_struct, &i2c);
   app_cli__add_command_handler(&sj2_cli_struct, &crash);
+  app_cli__add_command_handler(&sj2_cli_struct, &mp3);
 
   // In case other tasks are hogging the CPU, it would be useful to run the CLI
   // at high priority to at least be able to see what is going on
