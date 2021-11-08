@@ -100,9 +100,6 @@ void close_file(FIL *file_handler) {
 }
 
 void read_from_file(FIL *file_handler, char *buffer, UINT *Bytes_Read) {
-  f_read(file_handler, buffer, sizeof(songdata_t), Bytes_Read);
-  printf("Bytes Read: %i\n", *Bytes_Read);
-
   while (1) {
     f_read(file_handler, buffer, sizeof(songdata_t), Bytes_Read);
     printf("Bytes Read: %i\n", *Bytes_Read);
