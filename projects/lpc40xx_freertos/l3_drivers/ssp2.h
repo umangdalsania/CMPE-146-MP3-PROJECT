@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include "gpio.h"
 
 /**
  * This configures what DMA channels the SSP2 driver utilizes
@@ -30,3 +31,5 @@ uint8_t ssp2__exchange_byte(uint8_t byte_to_transmit);
 void ssp2__dma_write_block(const unsigned char *output_block, size_t number_of_bytes);
 void ssp2__dma_read_block(unsigned char *input_block, size_t number_of_bytes);
 /** @} */
+
+void ssp2_pin_initialize();
