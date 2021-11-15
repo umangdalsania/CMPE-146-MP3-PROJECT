@@ -4,3 +4,4 @@
 _build_*/*
 _build_*
 .vscode/c_cpp_properties.json
+.vscode/settings.json

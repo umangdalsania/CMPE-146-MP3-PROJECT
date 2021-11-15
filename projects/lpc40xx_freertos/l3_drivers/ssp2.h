@@ -1,8 +1,8 @@
 #pragma once
 
+#include "gpio.h"
 #include <stdint.h>
 #include <stdlib.h>
-#include "gpio.h"
 
 /**
  * This configures what DMA channels the SSP2 driver utilizes

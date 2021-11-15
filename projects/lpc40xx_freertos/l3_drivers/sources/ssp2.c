@@ -225,17 +225,16 @@ ssp_dma_error_e ssp2__dma_transfer_block(unsigned char *buffer_pointer, uint32_t
   return SSP_DMA__ERROR_NONE;
 }
 
+void ssp2_pin_initialize() {
+  gpio_s sck = {1, 0};
+  gpio_s miso = {1, 4};
+  gpio_s mosi = {1, 1};
 
-void ssp2_pin_initialize(){
-    gpio_s sck = {1, 0}; 
-    gpio_s miso = {1, 4};
-    gpio_s mosi = {1, 1};
+  gpio__set_as_output(sck);
+  gpio__set_as_input(miso);
+  gpio__set_as_output(mosi);
 
-    gpio__set_as_output(sck);
-    gpio__set_as_input(miso);
-    gpio__set_as_output(mosi);
-
-    gpio__set_function(sck, GPIO__FUNCTION_4);
-    gpio__set_function(miso, GPIO__FUNCTION_4);
-    gpio__set_function(mosi, GPIO__FUNCTION_4);
+  gpio__set_function(sck, GPIO__FUNCTION_4);
+  gpio__set_function(miso, GPIO__FUNCTION_4);
+  gpio__set_function(mosi, GPIO__FUNCTION_4);
 }

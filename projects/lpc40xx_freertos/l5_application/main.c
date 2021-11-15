@@ -2,14 +2,11 @@
 
 #include "FreeRTOS.h"
 #include "gpio.h"
+#include "songname_t.h"
 #include "task.h"
 
 #include "ff.h"
 #include "sj2_cli.h"
-
-typedef struct {
-  char song_name[16];
-} songname_t;
 
 typedef struct {
   char song_data[512];
@@ -34,6 +31,7 @@ int main(void) {
 
   puts("Starting RTOS");
   sj2_cli__init();
+  mp3_decoder_initialize();
 
   Q_songname = xQueueCreate(1, sizeof(songname_t));
   Q_songdata = xQueueCreate(1, sizeof(songdata_t));
@@ -53,8 +51,8 @@ static void mp3_reader_task(void *p) {
   UINT Bytes_Read;
 
   while (1) {
-    xQueueReceive(Q_songname, name.song_name, portMAX_DELAY);
-    fprintf(stderr, "Received song to play: %s\n", name.song_name);
+    xQueueReceive(Q_songname, &name.song_name, portMAX_DELAY);
+    fprintf(stderr, "Received [%s] to play.\n", name.song_name);
 
     if (open_file(&file_handler, name.song_name)) {
       read_from_file(&file_handler, buffer.song_data, &Bytes_Read);
@@ -65,16 +63,19 @@ static void mp3_reader_task(void *p) {
 
 static void mp3_player_task(void *p) {
   char bytes_512[512];
+  gpio_s dreq = {1, 20};
 
   while (1) {
-    if (xQueueReceive(Q_songdata, bytes_512, portMAX_DELAY)) {
-      fprintf(stderr, "Received Data!\n");
+    if (xQueueReceive(Q_songdata, &bytes_512, portMAX_DELAY)) {
+
+      for (int i = 0; i < sizeof(bytes_512); i++) {
+        while (!gpio__get(dreq)) {
+          ; // If decoder buffer is full
+        }
+
+        sj2_to_mp3_decoder(bytes_512[i]);
+      }
     }
-    // for (int i = 0; i < sizeof(bytes_512); i++) {
-    //   while (1) {
-    //     vTaskDelay(1);
-    //   }
-    //   //  spi_send_to_mp3_decoder(bytes_512[i]);
   }
 }
 
@@ -100,17 +101,16 @@ void close_file(FIL *file_handler) {
 }
 
 void read_from_file(FIL *file_handler, char *buffer, UINT *Bytes_Read) {
+  int counter = 0;
+
   while (1) {
-    if(uxQueueMessagesWaiting( Q_songname ) == 0){
     f_read(file_handler, buffer, sizeof(songdata_t), Bytes_Read);
-    printf("Bytes Read: %i\n", *Bytes_Read);
+    printf("%i: Read %i Bytes\n", counter, *Bytes_Read);
+    counter++;
 
     if (*Bytes_Read == 0)
       break;
 
     xQueueSend(Q_songdata, buffer, portMAX_DELAY);
-    }
-    else 
-      break;
   }
 }
