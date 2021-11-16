@@ -2,6 +2,8 @@
 
 #include "FreeRTOS.h"
 #include "gpio.h"
+#include "mp3_functions.h"
+#include "queue.h"
 #include "songname_t.h"
 #include "task.h"
 
@@ -14,6 +16,8 @@ typedef struct {
 
 QueueHandle_t Q_songname;
 QueueHandle_t Q_songdata;
+
+gpio_s dreq = {1, 30};
 
 // Reader tasks receives song-name over Q_songname to start reading it
 static void mp3_reader_task(void *p);
@@ -36,8 +40,8 @@ int main(void) {
   Q_songname = xQueueCreate(1, sizeof(songname_t));
   Q_songdata = xQueueCreate(1, sizeof(songdata_t));
 
-  xTaskCreate(mp3_reader_task, "Mp3_Reader", 4096 / sizeof(void), NULL, PRIORITY_LOW, NULL);
-  xTaskCreate(mp3_player_task, "Mp3_Player", 4096 / sizeof(void), NULL, PRIORITY_HIGH, NULL);
+  // xTaskCreate(mp3_reader_task, "Mp3_Reader", 4096 / sizeof(void), NULL, PRIORITY_LOW, NULL);
+  // xTaskCreate(mp3_player_task, "Mp3_Player", 4096 / sizeof(void), NULL, PRIORITY_HIGH, NULL);
 
   vTaskStartScheduler(); // This function never returns unless RTOS scheduler runs out of memory and fails
 
@@ -52,29 +56,11 @@ static void mp3_reader_task(void *p) {
 
   while (1) {
     xQueueReceive(Q_songname, &name.song_name, portMAX_DELAY);
-    fprintf(stderr, "Received [%s] to play.\n", name.song_name);
+    printf("Received [%s] to play.\n", name.song_name);
 
     if (open_file(&file_handler, name.song_name)) {
       read_from_file(&file_handler, buffer.song_data, &Bytes_Read);
       close_file(&file_handler);
-    }
-  }
-}
-
-static void mp3_player_task(void *p) {
-  char bytes_512[512];
-  gpio_s dreq = {1, 20};
-
-  while (1) {
-    if (xQueueReceive(Q_songdata, &bytes_512, portMAX_DELAY)) {
-
-      for (int i = 0; i < sizeof(bytes_512); i++) {
-        while (!gpio__get(dreq)) {
-          ; // If decoder buffer is full
-        }
-
-        sj2_to_mp3_decoder(bytes_512[i]);
-      }
     }
   }
 }
@@ -87,9 +73,9 @@ bool open_file(FIL *file_handler, char *song_name) {
     return true;
   }
 
-  else
+  else {
     printf("File cannot be found on microSD Card!\n");
-
+  }
   return false;
 }
 
@@ -112,5 +98,23 @@ void read_from_file(FIL *file_handler, char *buffer, UINT *Bytes_Read) {
       break;
 
     xQueueSend(Q_songdata, buffer, portMAX_DELAY);
+  }
+}
+
+static void mp3_player_task(void *p) {
+  char bytes_512[512];
+
+  while (1) {
+    if (xQueueReceive(Q_songdata, &bytes_512, portMAX_DELAY)) {
+      cs_c();
+      for (int i = 0; i < sizeof(bytes_512); i++) {
+        while (!gpio__get(dreq)) {
+          ; // If decoder buffer is full
+        }
+
+        sj2_to_mp3_decoder(bytes_512[i]);
+      }
+      ds_c();
+    }
   }
 }

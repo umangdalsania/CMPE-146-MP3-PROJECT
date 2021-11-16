@@ -1,7 +1,7 @@
 #include "delay.h"
 #include "gpio.h"
 #include "lpc40xx.h"
-#include "ssp2.h"
+#include "ssp0.h"
 #include <stdio.h>
 
 void mp3_decoder_initialize();
@@ -12,8 +12,10 @@ uint16_t sj2_read_from_decoder(uint8_t addr);
 
 void sj2_to_mp3_decoder(char byte);
 
-void cs_c();
-void ds_c();
+void mp3_cs(void);
+void mp3_ds(void);
 
-void cs_d();
-void ds_d();
+void mp3_data_cs(void);
+void mp3_data_ds(void);
+
+void mp3__reset(bool flag);
