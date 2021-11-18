@@ -9,10 +9,12 @@ void mp3_decoder_initialize() {
   /* Variable Declarations */
   uint8_t mode_reg = 0x0;
   uint8_t clockf_reg = 0x3;
+  uint8_t audata_reg = 0x5;
+  uint8_t volume_reg = 0xB;
 
-  uint16_t sdinew_mode = 0x0800;
+  uint16_t default_ = 0x4800;
 
-  uint16_t freq_3x_multiplier = 0x3000;
+  uint16_t freq_4_5x_multiplier = 0x6000;
 
   /* Configuring Required Pins */
 
@@ -42,13 +44,18 @@ void mp3_decoder_initialize() {
 
   printf("Status Read: 0x%04x\n", sj2_read_from_decoder(0x01));
 
-  sj2_write_to_decoder(mode_reg, sdinew_mode);
+  sj2_write_to_decoder(mode_reg, default_);
 
   printf("Mode Read: 0x%04x\n", sj2_read_from_decoder(0x00));
 
   delay__ms(100);
-  sj2_write_to_decoder(clockf_reg, freq_3x_multiplier);
+
+  sj2_write_to_decoder(clockf_reg, freq_4_5x_multiplier);
   delay__ms(100);
+
+  // printf("Received Clock Value: 0x%02X\n", sj2_read_from_decoder(audata_reg));
+
+  sj2_write_to_decoder(volume_reg, 0x5050);
 }
 
 void sj2_write_to_decoder(uint8_t reg, uint16_t data) {

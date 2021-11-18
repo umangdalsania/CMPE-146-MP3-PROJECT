@@ -40,8 +40,8 @@ int main(void) {
   Q_songname = xQueueCreate(1, sizeof(songname_t));
   Q_songdata = xQueueCreate(1, sizeof(songdata_t));
 
-  // xTaskCreate(mp3_reader_task, "Mp3_Reader", 4096 / sizeof(void), NULL, PRIORITY_LOW, NULL);
-  // xTaskCreate(mp3_player_task, "Mp3_Player", 4096 / sizeof(void), NULL, PRIORITY_HIGH, NULL);
+  xTaskCreate(mp3_reader_task, "Mp3_Reader", 4096 / sizeof(void), NULL, PRIORITY_LOW, NULL);
+  xTaskCreate(mp3_player_task, "Mp3_Player", 4096 / sizeof(void), NULL, PRIORITY_HIGH, NULL);
 
   vTaskStartScheduler(); // This function never returns unless RTOS scheduler runs out of memory and fails
 
@@ -106,7 +106,6 @@ static void mp3_player_task(void *p) {
 
   while (1) {
     if (xQueueReceive(Q_songdata, &bytes_512, portMAX_DELAY)) {
-      cs_c();
       for (int i = 0; i < sizeof(bytes_512); i++) {
         while (!gpio__get(dreq)) {
           ; // If decoder buffer is full
@@ -114,7 +113,6 @@ static void mp3_player_task(void *p) {
 
         sj2_to_mp3_decoder(bytes_512[i]);
       }
-      ds_c();
     }
   }
 }
