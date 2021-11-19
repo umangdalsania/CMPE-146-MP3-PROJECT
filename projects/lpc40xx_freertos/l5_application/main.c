@@ -66,24 +66,20 @@ static void mp3_reader_task(void *p) {
 }
 
 bool open_file(FIL *file_handler, char *song_name) {
-  const char *filename = song_name;
-
-  if (f_open(file_handler, filename, FA_READ) == FR_OK) {
+  if (f_open(file_handler, song_name, FA_READ) == FR_OK) {
     printf("File has been detected!\n");
     return true;
   }
 
-  else {
+  else 
     printf("File cannot be found on microSD Card!\n");
-  }
+  
   return false;
 }
 
 void close_file(FIL *file_handler) {
-  FRESULT result = f_close(file_handler);
-
-  if (result == FR_OK)
-    printf("File has been closed!\n");
+  if (f_close(file_handler == FR_OK))
+      printf("File has been closed!\n");
 }
 
 void read_from_file(FIL *file_handler, char *buffer, UINT *Bytes_Read) {
@@ -106,6 +102,7 @@ static void mp3_player_task(void *p) {
 
   while (1) {
     if (xQueueReceive(Q_songdata, &bytes_512, portMAX_DELAY)) {
+      
       for (int i = 0; i < sizeof(bytes_512); i++) {
         while (!gpio__get(dreq)) {
           ; // If decoder buffer is full

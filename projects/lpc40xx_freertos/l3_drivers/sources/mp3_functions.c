@@ -1,5 +1,10 @@
 #include "mp3_functions.h"
 
+#define reg_mode 0x0
+#define reg_clockf 0x3
+#define reg_audata 0x5
+#define reg_volume 0xB
+
 static gpio_s mp3_dreq;
 static gpio_s mp3_xcs;
 static gpio_s mp3_xdcs;
@@ -7,14 +12,8 @@ static gpio_s mp3_reset;
 
 void mp3_decoder_initialize() {
   /* Variable Declarations */
-  uint8_t mode_reg = 0x0;
-  uint8_t clockf_reg = 0x3;
-  uint8_t audata_reg = 0x5;
-  uint8_t volume_reg = 0xB;
-
-  uint16_t default_ = 0x4800;
-
-  uint16_t freq_4_5x_multiplier = 0x6000;
+  uint16_t default_settings = 0x4800;
+  uint16_t freq_3x_multiplier = 0x6000;
 
   /* Configuring Required Pins */
 
@@ -33,29 +32,25 @@ void mp3_decoder_initialize() {
   gpio__set_as_output(mp3_reset);
   gpio__set(mp3_reset);
 
-  // Reseting MP3 Decoder
-  mp3__reset(true);
-  delay__ms(100);
-  mp3__reset(false);
-
+  /* Initializing Decoder + SPI Port 0 */
+  mp3__reset();
   ssp0__init(1);
-
   delay__ms(100);
 
   printf("Status Read: 0x%04x\n", sj2_read_from_decoder(0x01));
 
-  sj2_write_to_decoder(mode_reg, default_);
+  sj2_write_to_decoder(reg_mode, default_settings);
 
   printf("Mode Read: 0x%04x\n", sj2_read_from_decoder(0x00));
 
   delay__ms(100);
 
-  sj2_write_to_decoder(clockf_reg, freq_4_5x_multiplier);
+  sj2_write_to_decoder(reg_clockf, freq_3x_multiplier);
   delay__ms(100);
 
   // printf("Received Clock Value: 0x%02X\n", sj2_read_from_decoder(audata_reg));
 
-  sj2_write_to_decoder(volume_reg, 0x5050);
+  sj2_write_to_decoder(reg_volume, 0x5050);
 }
 
 void sj2_write_to_decoder(uint8_t reg, uint16_t data) {
@@ -86,15 +81,14 @@ void sj2_to_mp3_decoder(char data) {
   mp3_data_ds();
 }
 
+void mp3__reset() {
+  gpio__reset(mp3_reset); // Reset Pin Is Active Low 
+  delay__ms(200);
+  gpio__set(mp3_reset);
+}
+
 void mp3_cs(void) { gpio__reset(mp3_xcs); }
 void mp3_ds(void) { gpio__set(mp3_xcs); }
 
 void mp3_data_cs(void) { gpio__reset(mp3_xdcs); }
 void mp3_data_ds(void) { gpio__set(mp3_xdcs); }
-
-void mp3__reset(bool flag) {
-  if (flag)
-    gpio__reset(mp3_reset);
-  else
-    gpio__set(mp3_reset);
-}
