@@ -2,10 +2,12 @@
 
 #include "FreeRTOS.h"
 #include "gpio.h"
-#include "mp3_functions.h"
 #include "queue.h"
 #include "songname_t.h"
 #include "task.h"
+
+#include "lcd1602.h"
+#include "mp3_functions.h"
 
 #include "ff.h"
 #include "sj2_cli.h"
@@ -33,13 +35,14 @@ int main(void) {
 
   puts("Starting RTOS");
   sj2_cli__init();
+  lcd__init();
   mp3_decoder_initialize();
 
-  Q_songname = xQueueCreate(1, sizeof(songname_t));
-  Q_songdata = xQueueCreate(1, sizeof(songdata_t));
+  // Q_songname = xQueueCreate(1, sizeof(songname_t));
+  // Q_songdata = xQueueCreate(1, sizeof(songdata_t));
 
-  xTaskCreate(mp3_reader_task, "Mp3_Reader", 4096 / sizeof(void), NULL, PRIORITY_LOW, NULL);
-  xTaskCreate(mp3_player_task, "Mp3_Player", 4096 / sizeof(void), NULL, PRIORITY_HIGH, NULL);
+  // xTaskCreate(mp3_reader_task, "Mp3_Reader", 4096 / sizeof(void), NULL, PRIORITY_LOW, NULL);
+  // xTaskCreate(mp3_player_task, "Mp3_Player", 4096 / sizeof(void), NULL, PRIORITY_HIGH, NULL);
 
   vTaskStartScheduler(); // This function never returns unless RTOS scheduler runs out of memory and fails
 
