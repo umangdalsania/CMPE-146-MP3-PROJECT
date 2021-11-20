@@ -5,11 +5,6 @@
 #define reg_audata 0x5
 #define reg_volume 0xB
 
-static gpio_s mp3_dreq;
-static gpio_s mp3_xcs;
-static gpio_s mp3_xdcs;
-static gpio_s mp3_reset;
-
 void mp3_decoder_initialize() {
   /* Variable Declarations */
   uint16_t default_settings = 0x4800;
@@ -17,18 +12,18 @@ void mp3_decoder_initialize() {
 
   /* Configuring Required Pins */
 
-  mp3_dreq = gpio__construct_with_function(GPIO__PORT_1, 30, GPIO__FUNCITON_0_IO_PIN);
-  gpio__set_as_input(mp3_dreq);
-
-  mp3_xcs = gpio__construct_with_function(GPIO__PORT_0, 26, GPIO__FUNCITON_0_IO_PIN);
+  mp3_xcs = gpio__construct_with_function(GPIO__PORT_2, 7, GPIO__FUNCITON_0_IO_PIN);
   gpio__set_as_output(mp3_xcs);
   mp3_ds();
 
-  mp3_xdcs = gpio__construct_with_function(GPIO__PORT_1, 31, GPIO__FUNCITON_0_IO_PIN);
+  mp3_xdcs = gpio__construct_with_function(GPIO__PORT_2, 9, GPIO__FUNCITON_0_IO_PIN);
   gpio__set_as_output(mp3_xdcs);
   mp3_data_ds();
 
-  mp3_reset = gpio__construct_with_function(GPIO__PORT_0, 25, GPIO__FUNCITON_0_IO_PIN);
+  mp3_dreq = gpio__construct_with_function(GPIO__PORT_2, 8, GPIO__FUNCITON_0_IO_PIN);
+  gpio__set_as_input(mp3_dreq);
+
+  mp3_reset = gpio__construct_with_function(GPIO__PORT_0, 16, GPIO__FUNCITON_0_IO_PIN);
   gpio__set_as_output(mp3_reset);
   gpio__set(mp3_reset);
 
@@ -48,9 +43,7 @@ void mp3_decoder_initialize() {
   sj2_write_to_decoder(reg_clockf, freq_3x_multiplier);
   delay__ms(100);
 
-  // printf("Received Clock Value: 0x%02X\n", sj2_read_from_decoder(audata_reg));
-
-  sj2_write_to_decoder(reg_volume, 0x5050);
+  sj2_write_to_decoder(reg_volume, 0x0000);
 }
 
 void sj2_write_to_decoder(uint8_t reg, uint16_t data) {
@@ -82,7 +75,7 @@ void sj2_to_mp3_decoder(char data) {
 }
 
 void mp3__reset() {
-  gpio__reset(mp3_reset); // Reset Pin Is Active Low 
+  gpio__reset(mp3_reset); // Reset Pin Is Active Low
   delay__ms(200);
   gpio__set(mp3_reset);
 }

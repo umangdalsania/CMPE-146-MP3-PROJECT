@@ -4,6 +4,12 @@
 #include "ssp0.h"
 #include <stdio.h>
 
+/* MP3 Decoder Pins */
+gpio_s mp3_dreq;
+gpio_s mp3_xcs;
+gpio_s mp3_xdcs;
+gpio_s mp3_reset;
+
 void mp3_decoder_initialize();
 
 void sj2_write_to_decoder(uint8_t reg, uint16_t data);
@@ -18,4 +24,4 @@ void mp3_ds(void);
 void mp3_data_cs(void);
 void mp3_data_ds(void);
 
-void mp3__reset(bool flag);
+void mp3__reset();

@@ -17,8 +17,6 @@ typedef struct {
 QueueHandle_t Q_songname;
 QueueHandle_t Q_songdata;
 
-gpio_s dreq = {1, 30};
-
 // Reader tasks receives song-name over Q_songname to start reading it
 static void mp3_reader_task(void *p);
 
@@ -71,15 +69,15 @@ bool open_file(FIL *file_handler, char *song_name) {
     return true;
   }
 
-  else 
+  else
     printf("File cannot be found on microSD Card!\n");
-  
+
   return false;
 }
 
 void close_file(FIL *file_handler) {
-  if (f_close(file_handler == FR_OK))
-      printf("File has been closed!\n");
+  if (f_close(file_handler) == FR_OK)
+    printf("File has been closed!\n");
 }
 
 void read_from_file(FIL *file_handler, char *buffer, UINT *Bytes_Read) {
@@ -102,9 +100,9 @@ static void mp3_player_task(void *p) {
 
   while (1) {
     if (xQueueReceive(Q_songdata, &bytes_512, portMAX_DELAY)) {
-      
+
       for (int i = 0; i < sizeof(bytes_512); i++) {
-        while (!gpio__get(dreq)) {
+        while (!gpio__get(mp3_dreq)) {
           ; // If decoder buffer is full
         }
 
