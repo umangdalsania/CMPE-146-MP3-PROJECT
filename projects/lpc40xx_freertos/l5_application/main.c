@@ -36,18 +36,13 @@ int main(void) {
   puts("Starting RTOS");
   sj2_cli__init();
   lcd__init();
+  mp3_decoder_initialize();
 
-  char songname[] = "Now Playing: Baby by JB <3";
+  Q_songname = xQueueCreate(1, sizeof(songname_t));
+  Q_songdata = xQueueCreate(1, sizeof(songdata_t));
 
-  lcd__print_string(songname);
-
-  // mp3_decoder_initialize();
-
-  // Q_songname = xQueueCreate(1, sizeof(songname_t));
-  // Q_songdata = xQueueCreate(1, sizeof(songdata_t));
-
-  // xTaskCreate(mp3_reader_task, "Mp3_Reader", 4096 / sizeof(void), NULL, PRIORITY_LOW, NULL);
-  // xTaskCreate(mp3_player_task, "Mp3_Player", 4096 / sizeof(void), NULL, PRIORITY_HIGH, NULL);
+  xTaskCreate(mp3_reader_task, "Mp3_Reader", 4096 / sizeof(void), NULL, PRIORITY_LOW, NULL);
+  xTaskCreate(mp3_player_task, "Mp3_Player", 4096 / sizeof(void), NULL, PRIORITY_HIGH, NULL);
 
   vTaskStartScheduler(); // This function never returns unless RTOS scheduler runs out of memory and fails
 
@@ -63,6 +58,7 @@ static void mp3_reader_task(void *p) {
   while (1) {
     xQueueReceive(Q_songname, &name.song_name, portMAX_DELAY);
     printf("Received [%s] to play.\n", name.song_name);
+    lcd__print_string(name.song_name);
 
     if (open_file(&file_handler, name.song_name)) {
       read_from_file(&file_handler, buffer.song_data, &Bytes_Read);

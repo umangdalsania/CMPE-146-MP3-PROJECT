@@ -152,15 +152,15 @@ void DB0_bit(bool active__1h) {
 /* Init Functions */
 
 void lcd__pins_init() {
-  lcd__reg_select = gpio__construct_with_function(GPIO__PORT_1, 0, GPIO__FUNCITON_0_IO_PIN);
+  lcd__reg_select = gpio__construct_with_function(GPIO__PORT_1, 31, GPIO__FUNCITON_0_IO_PIN);
   gpio__set_as_output(lcd__reg_select);
   gpio__reset(lcd__reg_select);
 
-  lcd__read_write_select = gpio__construct_with_function(GPIO__PORT_1, 1, GPIO__FUNCITON_0_IO_PIN);
+  lcd__read_write_select = gpio__construct_with_function(GPIO__PORT_1, 20, GPIO__FUNCITON_0_IO_PIN);
   gpio__set_as_output(lcd__read_write_select);
   gpio__reset(lcd__read_write_select);
 
-  lcd__enable = gpio__construct_with_function(GPIO__PORT_1, 4, GPIO__FUNCITON_0_IO_PIN);
+  lcd__enable = gpio__construct_with_function(GPIO__PORT_1, 28, GPIO__FUNCITON_0_IO_PIN);
   gpio__set_as_output(lcd__enable);
   gpio__reset(lcd__enable);
 
