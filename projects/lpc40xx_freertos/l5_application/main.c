@@ -36,7 +36,12 @@ int main(void) {
   puts("Starting RTOS");
   sj2_cli__init();
   lcd__init();
-  mp3_decoder_initialize();
+
+  char songname[] = "Now Playing: Baby by JB <3";
+
+  lcd__print_string(songname);
+
+  // mp3_decoder_initialize();
 
   // Q_songname = xQueueCreate(1, sizeof(songname_t));
   // Q_songdata = xQueueCreate(1, sizeof(songdata_t));
