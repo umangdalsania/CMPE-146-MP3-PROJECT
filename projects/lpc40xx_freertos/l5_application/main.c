@@ -8,6 +8,7 @@
 
 #include "lcd1602.h"
 #include "mp3_functions.h"
+#include "song_list.h"
 
 #include "ff.h"
 #include "sj2_cli.h"
@@ -33,10 +34,15 @@ void read_from_file(FIL *file_handler, char *data, UINT *Bytes_Read);
 
 int main(void) {
 
-  puts("Starting RTOS");
   sj2_cli__init();
   lcd__init();
-  mp3_decoder_initialize();
+  mp3__init();
+
+  song_list__populate();
+
+  for (size_t song_number = 0; song_number < song_list__get_item_count(); song_number++) {
+    printf("Song %2d: %s\n", (1 + song_number), song_list__get_name_for_item(song_number));
+  }
 
   Q_songname = xQueueCreate(1, sizeof(songname_t));
   Q_songdata = xQueueCreate(1, sizeof(songdata_t));
@@ -58,6 +64,7 @@ static void mp3_reader_task(void *p) {
   while (1) {
     xQueueReceive(Q_songname, &name.song_name, portMAX_DELAY);
     printf("Received [%s] to play.\n", name.song_name);
+    lcd__clear();
     lcd__print_string(name.song_name);
 
     if (open_file(&file_handler, name.song_name)) {
@@ -69,7 +76,7 @@ static void mp3_reader_task(void *p) {
 
 bool open_file(FIL *file_handler, char *song_name) {
   if (f_open(file_handler, song_name, FA_READ) == FR_OK) {
-    printf("File has been detected!\n");
+    printf("Playing queued song.\n");
     return true;
   }
 
@@ -81,7 +88,7 @@ bool open_file(FIL *file_handler, char *song_name) {
 
 void close_file(FIL *file_handler) {
   if (f_close(file_handler) == FR_OK)
-    printf("File has been closed!\n");
+    printf("Song is over.\n");
 }
 
 void read_from_file(FIL *file_handler, char *buffer, UINT *Bytes_Read) {
@@ -89,7 +96,6 @@ void read_from_file(FIL *file_handler, char *buffer, UINT *Bytes_Read) {
 
   while (1) {
     f_read(file_handler, buffer, sizeof(songdata_t), Bytes_Read);
-    printf("%i: Read %i Bytes\n", counter, *Bytes_Read);
     counter++;
 
     if (*Bytes_Read == 0)
@@ -101,6 +107,7 @@ void read_from_file(FIL *file_handler, char *buffer, UINT *Bytes_Read) {
 
 static void mp3_player_task(void *p) {
   char bytes_512[512];
+  gpio_s mp3_dreq = {2, 8};
 
   while (1) {
     if (xQueueReceive(Q_songdata, &bytes_512, portMAX_DELAY)) {

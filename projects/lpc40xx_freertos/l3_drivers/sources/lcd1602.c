@@ -1,10 +1,20 @@
 #include "lcd1602.h"
 #include "delay.h"
+#include "gpio.h"
+#include "lpc40xx.h"
+#include "ssp0.h"
 
+/* LCD Display Pins */
+static gpio_s lcd__reg_select;
+static gpio_s lcd__read_write_select;
+static gpio_s lcd__enable;
+static gpio_s lcd__db7, lcd__db6, lcd__db5, lcd__db4, lcd__db3, lcd__db2, lcd__db1, lcd__db0;
+
+/* Positioning Tracker */
 static uint8_t x_position = 0;
 static uint8_t y_position = 0;
 
-void lcd__clock() {
+void lcd__clock(void) {
   gpio__set(lcd__enable);
   delay__ms(1);
   gpio__reset(lcd__enable);
@@ -25,6 +35,17 @@ void lcd__command(uint8_t command) {
   DB0_bit(((1 << 0) & command));
 
   lcd__clock();
+}
+
+void lcd__clear(void){
+  uint8_t reset_x_position = 0;
+  uint8_t reset_y_position = 0;
+  uint8_t clear_display_command = 0;
+
+  lcd__command(clear_display_command);
+  
+  // Resets position to top-left corner.
+  lcd__set_position(reset_x_position,reset_y_position); 
 }
 
 /* Printing onto LCD Screen */
@@ -151,7 +172,7 @@ void DB0_bit(bool active__1h) {
 
 /* Init Functions */
 
-void lcd__pins_init() {
+void lcd__pins_init(void) {
   lcd__reg_select = gpio__construct_with_function(GPIO__PORT_1, 31, GPIO__FUNCITON_0_IO_PIN);
   gpio__set_as_output(lcd__reg_select);
   gpio__reset(lcd__reg_select);
@@ -189,7 +210,7 @@ void lcd__pins_init() {
   gpio__set_as_output(lcd__db0);
 }
 
-void lcd__init() {
+void lcd__init(void) {
   uint8_t eight_bit_mode = 0x30;
   uint8_t set_two_line = 0x08;
   uint8_t set_font_5_8 = 0x04;
