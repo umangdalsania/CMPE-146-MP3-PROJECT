@@ -37,15 +37,15 @@ void lcd__command(uint8_t command) {
   lcd__clock();
 }
 
-void lcd__clear(void){
+void lcd__clear(void) {
   uint8_t reset_x_position = 0;
   uint8_t reset_y_position = 0;
-  uint8_t clear_display_command = 0;
+  uint8_t clear_display_command = 0x01;
 
   lcd__command(clear_display_command);
-  
+
   // Resets position to top-left corner.
-  lcd__set_position(reset_x_position,reset_y_position); 
+  lcd__set_position(reset_x_position, reset_y_position);
 }
 
 /* Printing onto LCD Screen */
@@ -177,7 +177,7 @@ void lcd__pins_init(void) {
   gpio__set_as_output(lcd__reg_select);
   gpio__reset(lcd__reg_select);
 
-  lcd__read_write_select = gpio__construct_with_function(GPIO__PORT_1, 20, GPIO__FUNCITON_0_IO_PIN);
+  lcd__read_write_select = gpio__construct_with_function(GPIO__PORT_0, 25, GPIO__FUNCITON_0_IO_PIN);
   gpio__set_as_output(lcd__read_write_select);
   gpio__reset(lcd__read_write_select);
 

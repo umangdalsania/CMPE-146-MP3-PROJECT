@@ -6,6 +6,7 @@
 #include "songname_t.h"
 #include "task.h"
 
+#include "encoder.h"
 #include "lcd1602.h"
 #include "mp3_functions.h"
 #include "song_list.h"
@@ -26,30 +27,27 @@ static void mp3_reader_task(void *p);
 // Player task receives song data over Q_songdata to send it to the MP3 decoder
 static void mp3_player_task(void *p);
 
-// Misc Functions
-bool open_file(FIL *file_handler, char *song_name);
-void close_file(FIL *file_handler);
+// File Related Functions
+static bool open_file(FIL *file_handler, char *song_name);
+static void close_file(FIL *file_handler);
+static void read_from_file(FIL *file_handler, char *data, UINT *Bytes_Read);
 
-void read_from_file(FIL *file_handler, char *data, UINT *Bytes_Read);
+// Testing Functions
+static void gpio_pin_test(void *p);
 
 int main(void) {
 
   sj2_cli__init();
   lcd__init();
   mp3__init();
-
-  song_list__populate();
-
-  for (size_t song_number = 0; song_number < song_list__get_item_count(); song_number++) {
-    printf("Song %2d: %s\n", (1 + song_number), song_list__get_name_for_item(song_number));
-  }
+  encoder__init();
 
   Q_songname = xQueueCreate(1, sizeof(songname_t));
   Q_songdata = xQueueCreate(1, sizeof(songdata_t));
 
   xTaskCreate(mp3_reader_task, "Mp3_Reader", 4096 / sizeof(void), NULL, PRIORITY_LOW, NULL);
   xTaskCreate(mp3_player_task, "Mp3_Player", 4096 / sizeof(void), NULL, PRIORITY_HIGH, NULL);
-
+  xTaskCreate(gpio_pin_test, "Button_Testing", 4096 / sizeof(void), NULL, PRIORITY_LOW, NULL);
   vTaskStartScheduler(); // This function never returns unless RTOS scheduler runs out of memory and fails
 
   return 0;
@@ -74,7 +72,7 @@ static void mp3_reader_task(void *p) {
   }
 }
 
-bool open_file(FIL *file_handler, char *song_name) {
+static bool open_file(FIL *file_handler, char *song_name) {
   if (f_open(file_handler, song_name, FA_READ) == FR_OK) {
     printf("Playing queued song.\n");
     return true;
@@ -86,12 +84,12 @@ bool open_file(FIL *file_handler, char *song_name) {
   return false;
 }
 
-void close_file(FIL *file_handler) {
+static void close_file(FIL *file_handler) {
   if (f_close(file_handler) == FR_OK)
     printf("Song is over.\n");
 }
 
-void read_from_file(FIL *file_handler, char *buffer, UINT *Bytes_Read) {
+static void read_from_file(FIL *file_handler, char *buffer, UINT *Bytes_Read) {
   int counter = 0;
 
   while (1) {
@@ -106,6 +104,7 @@ void read_from_file(FIL *file_handler, char *buffer, UINT *Bytes_Read) {
 }
 
 static void mp3_player_task(void *p) {
+
   char bytes_512[512];
   gpio_s mp3_dreq = {2, 8};
 
@@ -120,5 +119,23 @@ static void mp3_player_task(void *p) {
         sj2_to_mp3_decoder(bytes_512[i]);
       }
     }
+  }
+}
+
+static void gpio_pin_test(void *p) {
+
+  while (1) {
+    if (!gpio__get(center_button))
+      printf("SW 1 (Center Button) has been pressed\n");
+    if (!gpio__get(down_button))
+      printf("SW 2 (Down Button) has been pressed\n");
+    if (!gpio__get(right_button))
+      printf("SW 3 (Right Button) has been pressed\n");
+    if (!gpio__get(up_button))
+      printf("SW 4 (Up Button) has been pressed\n");
+    if (!gpio__get(left_button))
+      printf("SW 5 (Left Button) has been pressed\n");
+
+    vTaskDelay(100);
   }
 }
