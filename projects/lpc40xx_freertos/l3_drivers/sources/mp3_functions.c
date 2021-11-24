@@ -1,13 +1,13 @@
 #include "mp3_functions.h"
 #include "delay.h"
+#include "encoder.h"
 #include "gpio.h"
 #include "lpc40xx.h"
 #include "ssp0.h"
 
-#define reg_mode 0x0
-#define reg_clockf 0x3
-#define reg_audata 0x5
-#define reg_volume 0xB
+#define SCI_MODE 0x0
+#define SCI_CLOCKF 0x3
+#define SCI_VOLUME 0xB
 
 #define DEBUG 0
 
@@ -45,10 +45,10 @@ void mp3__init(void) {
   ssp0__init(1);
   delay__ms(100);
 
-  sj2_write_to_decoder(reg_mode, default_settings);
+  sj2_write_to_decoder(SCI_MODE, default_settings);
   delay__ms(100);
 
-  sj2_write_to_decoder(reg_clockf, freq_3x_multiplier);
+  sj2_write_to_decoder(SCI_CLOCKF, freq_3x_multiplier);
   delay__ms(100);
 
 #if DEBUG
@@ -56,7 +56,7 @@ void mp3__init(void) {
   printf("Mode Read: 0x%04x\n", sj2_read_from_decoder(0x00));
 #endif
 
-  sj2_write_to_decoder(reg_volume, 0x0000);
+  sj2_write_to_decoder(SCI_VOLUME, 0x0000);
 }
 
 void sj2_write_to_decoder(uint8_t reg, uint16_t data) {
@@ -91,6 +91,35 @@ void mp3__reset(void) {
   gpio__reset(mp3_reset); // Reset Pin Is Active Low
   delay__ms(200);
   gpio__set(mp3_reset);
+}
+
+void mp3__volume_adjuster(void) {
+  double volume_value = mp3__get_volume_value();
+
+  uint8_t temp = 254 * (1 - volume_value);
+
+  uint16_t volume_to_decoder = (temp << 8) | (temp << 0);
+
+  // printf("Volume to Decoder = %x.\n", volume_to_decoder);
+
+  sj2_write_to_decoder(SCI_VOLUME, volume_to_decoder);
+}
+
+double mp3__get_volume_value(void) {
+  uint32_t get_index = encoder__get_index();
+
+  // printf("Get Index Value: %li.\n", get_index);
+
+  if (get_index < 0) {
+    // Reset if Index is neg ; no such thing as neg volume
+    encoder__reset_index();
+    return 0;
+  }
+
+  if (get_index > 100)
+    return 1;
+
+  return (get_index / 100.0);
 }
 
 void mp3__cs(void) { gpio__reset(mp3_xcs); }

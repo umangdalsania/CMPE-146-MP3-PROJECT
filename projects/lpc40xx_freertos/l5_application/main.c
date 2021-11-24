@@ -27,13 +27,13 @@ static void mp3_reader_task(void *p);
 // Player task receives song data over Q_songdata to send it to the MP3 decoder
 static void mp3_player_task(void *p);
 
+// Testing Function
+void test(void *p);
+
 // File Related Functions
 static bool open_file(FIL *file_handler, char *song_name);
 static void close_file(FIL *file_handler);
 static void read_from_file(FIL *file_handler, char *data, UINT *Bytes_Read);
-
-// Testing Functions
-static void gpio_pin_test(void *p);
 
 int main(void) {
 
@@ -42,12 +42,18 @@ int main(void) {
   mp3__init();
   encoder__init();
 
+  song_list__populate();
+  for (size_t song_number = 0; song_number < song_list__get_item_count(); song_number++) {
+    printf("Song %2d: %s\n", (1 + song_number), song_list__get_name_for_item(song_number));
+  }
+
   Q_songname = xQueueCreate(1, sizeof(songname_t));
   Q_songdata = xQueueCreate(1, sizeof(songdata_t));
 
   xTaskCreate(mp3_reader_task, "Mp3_Reader", 4096 / sizeof(void), NULL, PRIORITY_LOW, NULL);
   xTaskCreate(mp3_player_task, "Mp3_Player", 4096 / sizeof(void), NULL, PRIORITY_HIGH, NULL);
-  xTaskCreate(gpio_pin_test, "Button_Testing", 4096 / sizeof(void), NULL, PRIORITY_LOW, NULL);
+  xTaskCreate(test, "test", 4096 / sizeof(void), NULL, PRIORITY_LOW, NULL);
+
   vTaskStartScheduler(); // This function never returns unless RTOS scheduler runs out of memory and fails
 
   return 0;
@@ -122,20 +128,11 @@ static void mp3_player_task(void *p) {
   }
 }
 
-static void gpio_pin_test(void *p) {
-
+void test(void *p) {
   while (1) {
-    if (!gpio__get(center_button))
-      printf("SW 1 (Center Button) has been pressed\n");
-    if (!gpio__get(down_button))
-      printf("SW 2 (Down Button) has been pressed\n");
-    if (!gpio__get(right_button))
-      printf("SW 3 (Right Button) has been pressed\n");
-    if (!gpio__get(up_button))
-      printf("SW 4 (Up Button) has been pressed\n");
-    if (!gpio__get(left_button))
-      printf("SW 5 (Left Button) has been pressed\n");
+    mp3__volume_adjuster();
+    vTaskDelay(1000);
 
-    vTaskDelay(100);
+    printf("Volume Currently @: %x\n", sj2_read_from_decoder(0xB));
   }
 }

@@ -35,6 +35,8 @@ static const uint8_t lpc_peripheral_pconp_bit_map[] = {
     [LPC_PERIPHERAL__PWM1] = 6,
     [LPC_PERIPHERAL__ADC] = 12,
     [LPC_PERIPHERAL__GPDMA] = 29,
+
+    [LPC_PERIPHERAL__QEI] = 18,
 };
 // clang-format on
 
