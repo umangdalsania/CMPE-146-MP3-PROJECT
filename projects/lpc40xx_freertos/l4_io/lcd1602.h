@@ -10,8 +10,10 @@ void lcd__clock(void);
 void lcd__command(uint8_t command);
 void lcd__clear(void);
 void lcd__print(uint8_t character);
-void lcd__print_string(const char *song_name);
+void lcd__print_string(const char *song_name, int line);
+void lcd__print_helper(const char *song_name);
 void lcd__set_position(uint8_t x, uint8_t y);
+void lcd__print_arrow(int line);
 
 /* Pin Config */
 

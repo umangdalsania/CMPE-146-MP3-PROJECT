@@ -1,3 +1,3 @@
 typedef struct {
-  char song_name[16];
+  char song_name[19];
 } songname_t;

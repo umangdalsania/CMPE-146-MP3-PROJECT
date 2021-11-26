@@ -10,10 +10,6 @@ static gpio_s lcd__read_write_select;
 static gpio_s lcd__enable;
 static gpio_s lcd__db7, lcd__db6, lcd__db5, lcd__db4, lcd__db3, lcd__db2, lcd__db1, lcd__db0;
 
-/* Positioning Tracker */
-static uint8_t x_position = 0;
-static uint8_t y_position = 0;
-
 void lcd__clock(void) {
   gpio__set(lcd__enable);
   delay__ms(1);
@@ -48,21 +44,16 @@ void lcd__clear(void) {
   lcd__set_position(reset_x_position, reset_y_position);
 }
 
+void lcd__clear_line(int line) {
+  char arr[] = "                    ";
+
+  lcd__set_position(0, line);
+  lcd__print_helper(arr);
+}
+
 /* Printing onto LCD Screen */
 
 void lcd__print(uint8_t character) {
-
-  if (x_position > 15) {
-    if (y_position > 0) {
-      lcd__set_position(0, 0);
-      y_position = 0;
-    } else {
-      y_position++;
-      lcd__set_position(0, 1);
-    }
-
-    x_position = 0;
-  }
 
   RS_bit(1);
   RW_bit(0);
@@ -77,25 +68,62 @@ void lcd__print(uint8_t character) {
   DB0_bit(((1 << 0) & character));
 
   lcd__clock();
-
-  x_position++;
 }
 
-void lcd__print_string(const char *song_name) {
-  for (int i = 0; i < 32; i++) {
-    if (song_name[i] == '\0')
-      break;
+void lcd__print_string(const char *song_name, int line) {
+  lcd__clear_line(line);
+  lcd__set_position(0, line);
+  lcd__print_helper(song_name);
+}
 
+void lcd__print_helper(const char *song_name) {
+  for (int i = 0; i < 20; i++) {
+
+    // Remove .mp3 from display
+    if (song_name[i] == '.' || song_name[i] == '\0')
+      break;
     lcd__print(song_name[i]);
   }
 }
 
 void lcd__set_position(uint8_t x, uint8_t y) {
-  if (y == 1) {
+  switch (y) {
+  case 2:
     x += 0x40;
+    break;
+  case 3:
+    x += 0x14;
+    break;
+  case 4:
+    x += 0x54;
+    break;
+  default:
+    x += 0x00;
   }
 
   lcd__command(0x80 | x);
+}
+
+void lcd__print_arrow(int line) {
+  switch (line) {
+  case 1:
+    lcd__set_position(19, 1);
+    break;
+  case 2:
+    lcd__set_position(19, 2);
+    break;
+  case 3:
+    lcd__set_position(19, 3);
+    break;
+  case 4:
+    lcd__set_position(19, 4);
+    break;
+  default:
+    lcd__set_position(19, 1);
+    break;
+  }
+
+  lcd__print_helper("<");
 }
 
 /* Pin Configurations */
@@ -214,7 +242,9 @@ void lcd__init(void) {
   uint8_t eight_bit_mode = 0x30;
   uint8_t set_two_line = 0x08;
   uint8_t set_font_5_8 = 0x04;
-  uint8_t display_on = 0x0F;
+  uint8_t display_on = 0x0C;
+  uint8_t cursor_on = 0x2;
+  uint8_t blinking_on = 0x1;
   uint8_t display_off = 0x08;
   uint8_t display_clear = 0x01;
   uint8_t entry_mode_increment_on_shift_off = 0x6;

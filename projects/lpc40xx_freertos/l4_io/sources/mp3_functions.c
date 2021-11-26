@@ -2,7 +2,6 @@
 #include "delay.h"
 #include "encoder.h"
 
-#include "gpio.h"
 #include "lpc40xx.h"
 #include "ssp0.h"
 
@@ -43,6 +42,7 @@ void mp3__init(void) {
   uint16_t freq_3x_multiplier = 0x6000;
 
   /* Initializing Decoder + SPI Port 0 */
+  mp3__interrupt_init();
   mp3__pins_init();
   mp3__reset();
   ssp0__init(1);
@@ -58,7 +58,6 @@ void mp3__init(void) {
   printf("Status Read: 0x%04x\n", sj2_read_from_decoder(0x01));
   printf("Mode Read: 0x%04x\n", sj2_read_from_decoder(0x00));
 #endif
-
   sj2_write_to_decoder(SCI_VOLUME, 0x0000);
 }
 
