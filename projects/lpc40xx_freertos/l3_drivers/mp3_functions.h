@@ -1,5 +1,7 @@
 #include <stdio.h>
 
+typedef void (*function_pointer_t)(void);
+
 void mp3__init(void);
 void mp3__pins_init(void);
 void mp3__reset(void);
@@ -16,3 +18,8 @@ void mp3__data_cs(void);
 void mp3__data_ds(void);
 
 double mp3__get_volume_value(void);
+
+void mp3__ISR_init(void);
+void mp3__interrupt_dispatcher(void);
+void mp3__update_qei_interrupts(void);
+void mp3__volume_isr(void);

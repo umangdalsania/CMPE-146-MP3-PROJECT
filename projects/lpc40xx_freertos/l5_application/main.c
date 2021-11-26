@@ -27,9 +27,6 @@ static void mp3_reader_task(void *p);
 // Player task receives song data over Q_songdata to send it to the MP3 decoder
 static void mp3_player_task(void *p);
 
-// Testing Function
-void test(void *p);
-
 // File Related Functions
 static bool open_file(FIL *file_handler, char *song_name);
 static void close_file(FIL *file_handler);
@@ -38,9 +35,10 @@ static void read_from_file(FIL *file_handler, char *data, UINT *Bytes_Read);
 int main(void) {
 
   sj2_cli__init();
+  encoder__init();
   lcd__init();
   mp3__init();
-  encoder__init();
+  mp3__ISR_init();
 
   song_list__populate();
   for (size_t song_number = 0; song_number < song_list__get_item_count(); song_number++) {
@@ -52,7 +50,6 @@ int main(void) {
 
   xTaskCreate(mp3_reader_task, "Mp3_Reader", 4096 / sizeof(void), NULL, PRIORITY_LOW, NULL);
   xTaskCreate(mp3_player_task, "Mp3_Player", 4096 / sizeof(void), NULL, PRIORITY_HIGH, NULL);
-  xTaskCreate(test, "test", 4096 / sizeof(void), NULL, PRIORITY_LOW, NULL);
 
   vTaskStartScheduler(); // This function never returns unless RTOS scheduler runs out of memory and fails
 
@@ -125,14 +122,5 @@ static void mp3_player_task(void *p) {
         sj2_to_mp3_decoder(bytes_512[i]);
       }
     }
-  }
-}
-
-void test(void *p) {
-  while (1) {
-    mp3__volume_adjuster();
-    vTaskDelay(1000);
-
-    printf("Volume Currently @: %x\n", sj2_read_from_decoder(0xB));
   }
 }

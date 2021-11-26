@@ -1,6 +1,7 @@
 #include "mp3_functions.h"
 #include "delay.h"
 #include "encoder.h"
+
 #include "gpio.h"
 #include "lpc40xx.h"
 #include "ssp0.h"
@@ -16,6 +17,8 @@ static gpio_s mp3_dreq;
 static gpio_s mp3_xcs;
 static gpio_s mp3_xdcs;
 static gpio_s mp3_reset;
+
+/* Volume Sem */
 
 void mp3__pins_init(void) {
   mp3_xcs = gpio__construct_with_function(GPIO__PORT_2, 7, GPIO__FUNCITON_0_IO_PIN);
@@ -94,21 +97,23 @@ void mp3__reset(void) {
 }
 
 void mp3__volume_adjuster(void) {
+  // mp3__update_qei_interrupts();
+
   double volume_value = mp3__get_volume_value();
 
-  uint8_t temp = 254 * (1 - volume_value);
+  uint8_t volume_value_for_one_ear = 254 * (1 - volume_value);
+  uint16_t volume_value_to_both_ears = (volume_value_for_one_ear << 8) | (volume_value_for_one_ear << 0);
 
-  uint16_t volume_to_decoder = (temp << 8) | (temp << 0);
-
-  // printf("Volume to Decoder = %x.\n", volume_to_decoder);
-
-  sj2_write_to_decoder(SCI_VOLUME, volume_to_decoder);
+  sj2_write_to_decoder(SCI_VOLUME, volume_value_to_both_ears);
 }
 
 double mp3__get_volume_value(void) {
-  uint32_t get_index = encoder__get_index();
+  int get_index = encoder__get_index();
 
-  // printf("Get Index Value: %li.\n", get_index);
+  fprintf(stderr, "Volume Value: %i.\n", get_index);
+  if (LPC_QEI->INTSTAT & (1 << 9)) {
+    fprintf(stderr, "Reached Vol 10\n");
+  }
 
   if (get_index < 0) {
     // Reset if Index is neg ; no such thing as neg volume
@@ -122,6 +127,23 @@ double mp3__get_volume_value(void) {
   return (get_index / 100.0);
 }
 
+void mp3__update_qei_interrupts(void) {
+
+  uint32_t index = encoder__get_index();
+  if (index <= 0) {
+    LPC_QEI->INXCMP0 = 1;
+    LPC_QEI->INXCMP1 = 2;
+  }
+
+  else if (index > 0 && index < 100) {
+    LPC_QEI->INXCMP0 = index + 1;
+    LPC_QEI->INXCMP1 = index - 1;
+
+  } else {
+    LPC_QEI->INXCMP0 = 98;
+    LPC_QEI->INXCMP1 = 99;
+  }
+}
 void mp3__cs(void) { gpio__reset(mp3_xcs); }
 void mp3__ds(void) { gpio__set(mp3_xcs); }
 

@@ -3,6 +3,8 @@
 #include "lpc40xx.h"
 #include "lpc_peripherals.h"
 
+static gpio_s center_button, down_button, right_button, up_button, left_button;
+
 static gpio_s encA, encB;
 
 void encoder__init(void) {
@@ -42,8 +44,8 @@ void encoder__set_as_input(void) {
 }
 
 void encoder__reset_index(void) {
-  LPC_QEI->CON |= (1 << 1);
-  LPC_QEI->CON &= ~(1 << 1);
+  LPC_QEI->CON |= (1 << 3);
+  LPC_QEI->CON &= ~(1 << 3);
 }
 
 void encoder__turn_on_power(void) { lpc_peripheral__turn_on_power_to(LPC_PERIPHERAL__QEI); }
