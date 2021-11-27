@@ -2,7 +2,9 @@
 #include "gpio.h"
 #include "lpc40xx.h"
 #include "lpc_peripherals.h"
+#include <stdio.h>
 
+static gpio_s center_button, up_button, down_button, left_button, right_button;
 static gpio_s encA, encB;
 
 void encoder__init(void) {
@@ -41,12 +43,12 @@ void encoder__set_as_input(void) {
   gpio__set_as_input(left_button);
 }
 
-void encoder__reset_index(void) {
-  LPC_QEI->CON |= (1 << 3);
-  LPC_QEI->CON &= ~(1 << 3);
-}
-
 void encoder__turn_on_power(void) { lpc_peripheral__turn_on_power_to(LPC_PERIPHERAL__QEI); }
-uint8_t encoder__get_position(void) { return (LPC_QEI->POS & 0xFF); }
 uint32_t encoder__get_index(void) { return (LPC_QEI->INXCNT); }
 void encoder__set_max_position(void) { LPC_QEI->MAXPOS = 1; }
+
+gpio_s get_center_button(void) { return center_button; }
+gpio_s get_down_button(void) { return down_button; }
+gpio_s get_left_button(void) { return left_button; }
+gpio_s get_right_button(void) { return right_button; }
+gpio_s get_up_button(void) { return up_button; }

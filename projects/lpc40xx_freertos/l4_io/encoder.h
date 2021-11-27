@@ -1,8 +1,5 @@
 #pragma once
 #include "gpio.h"
-#include <stdio.h>
-
-gpio_s center_button, down_button, right_button, up_button, left_button;
 
 void encoder__init(void);
 void encoder__pins_init(void);
@@ -10,7 +7,11 @@ void encoder__set_max_position(void);
 
 void encoder__set_as_input(void);
 void encoder__turn_on_power(void);
-void encoder__reset_index(void);
 
-uint8_t encoder__get_position(void);
 uint32_t encoder__get_index(void);
+
+gpio_s get_center_button(void);
+gpio_s get_down_button(void);
+gpio_s get_left_button(void);
+gpio_s get_right_button(void);
+gpio_s get_up_button(void);

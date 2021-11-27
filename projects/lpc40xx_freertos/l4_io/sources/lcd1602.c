@@ -3,6 +3,7 @@
 #include "gpio.h"
 #include "lpc40xx.h"
 #include "ssp0.h"
+#include <ctype.h>
 
 /* LCD Display Pins */
 static gpio_s lcd__reg_select;
@@ -104,26 +105,26 @@ void lcd__set_position(uint8_t x, uint8_t y) {
   lcd__command(0x80 | x);
 }
 
-void lcd__print_arrow(int line) {
+void lcd__print_selector(int line) {
   switch (line) {
   case 1:
-    lcd__set_position(19, 1);
+    lcd__set_position(16, 1);
     break;
   case 2:
-    lcd__set_position(19, 2);
+    lcd__set_position(16, 2);
     break;
   case 3:
-    lcd__set_position(19, 3);
+    lcd__set_position(16, 3);
     break;
   case 4:
-    lcd__set_position(19, 4);
+    lcd__set_position(16, 4);
     break;
   default:
-    lcd__set_position(19, 1);
+    lcd__set_position(16, 1);
     break;
   }
 
-  lcd__print_helper("<");
+  lcd__print_helper("<--");
 }
 
 /* Pin Configurations */

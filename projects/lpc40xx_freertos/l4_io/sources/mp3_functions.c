@@ -1,9 +1,9 @@
 #include "mp3_functions.h"
-#include "delay.h"
-#include "encoder.h"
 
+#include "delay.h"
 #include "lpc40xx.h"
 #include "ssp0.h"
+#include "stdlib.h"
 
 #define SCI_MODE 0x0
 #define SCI_CLOCKF 0x3
@@ -11,13 +11,38 @@
 
 #define DEBUG 0
 
+/*===========================================================*/
+/*=================| Global Variable Decl |==================*/
+/*===========================================================*/
+
+QueueHandle_t Q_songname;
+QueueHandle_t Q_songdata;
+
+SemaphoreHandle_t mp3_prev_bin_sem;
+SemaphoreHandle_t mp3_next_bin_sem;
+SemaphoreHandle_t mp3_pause_bin_sem;
+SemaphoreHandle_t mp3_move_up_bin_sem;
+SemaphoreHandle_t mp3_move_down_bin_sem;
+SemaphoreHandle_t mp3_select_song_bin_sem;
+
+volatile bool pause;
+volatile bool playing_mode;
+volatile size_t song_index;
+
+/*===========================================================*/
+/*=================| MP3 Hardware Control |==================*/
+/*===========================================================*/
+
 /* MP3 Decoder Pins */
 static gpio_s mp3_dreq;
 static gpio_s mp3_xcs;
 static gpio_s mp3_xdcs;
 static gpio_s mp3_reset;
 
-/* Volume Sem */
+/* MP3 Vol Vars */
+static double volume_value = 0.0;
+static int previous_index_value = 0;
+static int current_volume_value = 0;
 
 void mp3__pins_init(void) {
   mp3_xcs = gpio__construct_with_function(GPIO__PORT_2, 7, GPIO__FUNCITON_0_IO_PIN);
@@ -36,7 +61,7 @@ void mp3__pins_init(void) {
   gpio__set(mp3_reset);
 }
 
-void mp3__init(void) {
+void mp3__decoder_init(void) {
   /* Variable Declarations */
   uint16_t default_settings = 0x4800;
   uint16_t freq_3x_multiplier = 0x6000;
@@ -58,8 +83,35 @@ void mp3__init(void) {
   printf("Status Read: 0x%04x\n", sj2_read_from_decoder(0x01));
   printf("Mode Read: 0x%04x\n", sj2_read_from_decoder(0x00));
 #endif
-  sj2_write_to_decoder(SCI_VOLUME, 0x0000);
+  sj2_write_to_decoder(SCI_VOLUME, 0x7f7f);
 }
+
+void mp3__init(void) {
+  mp3__decoder_init();
+  encoder__init();
+  lcd__init();
+  mp3__attach_interrupts_for_menu();
+
+  mp3_prev_bin_sem = xSemaphoreCreateBinary();
+  mp3_next_bin_sem = xSemaphoreCreateBinary();
+  mp3_pause_bin_sem = xSemaphoreCreateBinary();
+  mp3_move_up_bin_sem = xSemaphoreCreateBinary();
+  mp3_move_down_bin_sem = xSemaphoreCreateBinary();
+  mp3_select_song_bin_sem = xSemaphoreCreateBinary();
+
+  Q_songname = xQueueCreate(1, sizeof(songname_t));
+  Q_songdata = xQueueCreate(1, sizeof(songdata_t));
+
+  pause = false;
+  playing_mode = false;
+  song_index = song_list__get_item_count();
+  song_list__populate();
+  mp3__print_songs_in_menu();
+}
+
+/*===========================================================*/
+/*==============| MP3 Communication Controls |===============*/
+/*===========================================================*/
 
 void sj2_write_to_decoder(uint8_t reg, uint16_t data) {
   mp3__cs();
@@ -95,56 +147,174 @@ void mp3__reset(void) {
   gpio__set(mp3_reset);
 }
 
-void mp3__volume_adjuster(void) {
-  // mp3__update_qei_interrupts();
-
-  double volume_value = mp3__get_volume_value();
-
-  uint8_t volume_value_for_one_ear = 254 * (1 - volume_value);
-  uint16_t volume_value_to_both_ears = (volume_value_for_one_ear << 8) | (volume_value_for_one_ear << 0);
-
-  sj2_write_to_decoder(SCI_VOLUME, volume_value_to_both_ears);
-}
-
-double mp3__get_volume_value(void) {
-  int get_index = encoder__get_index();
-
-  fprintf(stderr, "Volume Value: %i.\n", get_index);
-  if (LPC_QEI->INTSTAT & (1 << 9)) {
-    fprintf(stderr, "Reached Vol 10\n");
-  }
-
-  if (get_index < 0) {
-    // Reset if Index is neg ; no such thing as neg volume
-    encoder__reset_index();
-    return 0;
-  }
-
-  if (get_index > 100)
-    return 1;
-
-  return (get_index / 100.0);
-}
-
-void mp3__update_qei_interrupts(void) {
-
-  uint32_t index = encoder__get_index();
-  if (index <= 0) {
-    LPC_QEI->INXCMP0 = 1;
-    LPC_QEI->INXCMP1 = 2;
-  }
-
-  else if (index > 0 && index < 100) {
-    LPC_QEI->INXCMP0 = index + 1;
-    LPC_QEI->INXCMP1 = index - 1;
-
-  } else {
-    LPC_QEI->INXCMP0 = 98;
-    LPC_QEI->INXCMP1 = 99;
-  }
-}
 void mp3__cs(void) { gpio__reset(mp3_xcs); }
 void mp3__ds(void) { gpio__set(mp3_xcs); }
 
 void mp3__data_cs(void) { gpio__reset(mp3_xdcs); }
 void mp3__data_ds(void) { gpio__set(mp3_xdcs); }
+
+gpio_s mp3__get_dreq(void) { return mp3_dreq; }
+
+/*===========================================================*/
+/*=================| File Related Controls |=================*/
+/*===========================================================*/
+
+bool open_file(FIL *file_handler, char *song_name) {
+  if (f_open(file_handler, song_name, FA_READ) == FR_OK)
+    return true;
+
+  return false;
+}
+
+void close_file(FIL *file_handler) { f_close(file_handler); }
+
+void read_from_file(FIL *file_handler, char *buffer, UINT *Bytes_Read) {
+  int counter = 0;
+
+  while (1) {
+    f_read(file_handler, buffer, sizeof(songdata_t), Bytes_Read);
+    counter++;
+
+    if (*Bytes_Read == 0 || (uxQueueMessagesWaiting(Q_songname) == 1))
+      break;
+
+    xQueueSend(Q_songdata, buffer, portMAX_DELAY);
+  }
+}
+
+/*===========================================================*/
+/*==================| MP3 Volume Control |===================*/
+/*===========================================================*/
+
+void mp3__volume_adjuster(void) {
+
+  if (previous_index_value == encoder__get_index()) {
+    return;
+  }
+
+  volume_value = mp3__get_volume_value();
+
+  uint8_t volume_value_for_one_ear = 254 * (1 - volume_value);
+  uint16_t volume_value_to_both_ears = (volume_value_for_one_ear << 8) | (volume_value_for_one_ear << 0);
+
+  sj2_write_to_decoder(SCI_VOLUME, volume_value_to_both_ears);
+  if (playing_mode) {
+    mp3__display_volume();
+  }
+}
+
+double mp3__get_volume_value(void) {
+  int get_index = encoder__get_index();
+
+  if (current_volume_value == 0) {
+    if (get_index < previous_index_value) {
+      previous_index_value = get_index;
+      return 0;
+    }
+
+    else
+      current_volume_value++;
+  }
+
+  else if (current_volume_value == 100) {
+    if (get_index > previous_index_value) {
+      previous_index_value = get_index;
+      return 1;
+    }
+
+    else
+      current_volume_value--;
+
+  }
+
+  else {
+    if (get_index > previous_index_value)
+      current_volume_value++;
+    else
+      current_volume_value--;
+  }
+
+  previous_index_value = get_index;
+  return (current_volume_value / 100.0);
+}
+
+void mp3__display_volume(void) {
+  int size_of_arr;
+
+  mp3__clear_volume_positions();
+
+  if (current_volume_value < 10) {
+    size_of_arr = 1;
+    lcd__set_position(18, 4);
+  }
+
+  else if (current_volume_value >= 10 && current_volume_value <= 99) {
+    size_of_arr = 2;
+    lcd__set_position(17, 4);
+  }
+
+  else {
+    size_of_arr = 3;
+    lcd__set_position(16, 4);
+  }
+
+  char arr[current_volume_value];
+
+  itoa(current_volume_value, arr, 10);
+
+  for (int i = 0; i < size_of_arr; i++) {
+    lcd__print(arr[i]);
+  }
+
+  lcd__set_position(19, 4);
+  lcd__print('%%');
+}
+
+void mp3__clear_volume_positions(void) {
+  char *clear = "   ";
+
+  lcd__set_position(16, 4);
+
+  for (int i = 0; i < 4; i++)
+    lcd__print(clear[i]);
+}
+
+/*===========================================================*/
+/*==================| MP3 Menu Functions |===================*/
+/*===========================================================*/
+
+void mp3__decrement_song_index(void) {
+  if (song_index == 0) {
+    song_index = song_list__get_item_count();
+  }
+  song_index--;
+}
+
+void mp3__increment_song_index(void) {
+  song_index++;
+  if (song_index >= song_list__get_item_count()) {
+    song_index = 0;
+  }
+}
+
+void mp3__print_songs_in_menu(void) {
+  lcd__print_string("=== Menu", 1);
+  mp3__decrement_song_index();
+  lcd__print_string(song_list__get_name_for_item(song_index), 2);
+  mp3__increment_song_index();
+  lcd__print_string(song_list__get_name_for_item(song_index), 3);
+  mp3__increment_song_index();
+  lcd__print_string(song_list__get_name_for_item(song_index), 4);
+  mp3__decrement_song_index();
+
+  lcd__print_selector(3);
+}
+
+void mp3__display_now_playing(void) {
+  lcd__clear();
+  lcd__print_string("=== Playing ", 1);
+  lcd__print_string(song_list__get_name_for_item(song_index), 2);
+  lcd__print_string("Volume:         ", 4);
+  mp3__display_volume();
+  xQueueSend(Q_songname, song_list__get_name_for_item(song_index), portMAX_DELAY);
+}

@@ -1,7 +1,7 @@
 #include "cli_handlers.h"
 
 #include "FreeRTOS.h"
-#include "songname_t.h"
+#include "song_attributes.h"
 #include "task.h"
 #include <stdio.h>
 
