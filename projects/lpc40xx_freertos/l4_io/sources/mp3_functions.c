@@ -193,11 +193,7 @@ void mp3__volume_adjuster(void) {
   }
 
   volume_value = mp3__get_volume_value();
-
   uint8_t volume_value_for_one_ear = 254 * (1 - ((volume_value * 0.50) + 0.5));
-
-  printf("Volume Value : %f\n", volume_value);
-  printf("Current Volume Step: %i\n\n.", current_vol_step);
   uint16_t volume_value_to_both_ears = (volume_value_for_one_ear << 8) | (volume_value_for_one_ear << 0);
 
   sj2_write_to_decoder(SCI_VOLUME, volume_value_to_both_ears);
