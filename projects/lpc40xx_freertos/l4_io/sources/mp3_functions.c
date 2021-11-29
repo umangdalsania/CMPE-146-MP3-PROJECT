@@ -42,7 +42,7 @@ static gpio_s mp3_reset;
 /* MP3 Vol Vars */
 static double volume_value = 0.0;
 static int previous_index_value = 0;
-static int current_volume_value = 0;
+static int current_vol_step = 0;
 
 void mp3__pins_init(void) {
   mp3_xcs = gpio__construct_with_function(GPIO__PORT_2, 7, GPIO__FUNCITON_0_IO_PIN);
@@ -206,36 +206,36 @@ void mp3__volume_adjuster(void) {
 double mp3__get_volume_value(void) {
   int get_index = encoder__get_index();
 
-  if (current_volume_value == 0) {
+  if (current_vol_step == 0) {
     if (get_index < previous_index_value) {
       previous_index_value = get_index;
       return 0;
     }
 
     else
-      current_volume_value++;
+      current_vol_step++;
   }
 
-  else if (current_volume_value == 100) {
+  else if (current_vol_step == 100) {
     if (get_index > previous_index_value) {
       previous_index_value = get_index;
       return 1;
     }
 
     else
-      current_volume_value--;
+      current_vol_step--;
 
   }
 
   else {
     if (get_index > previous_index_value)
-      current_volume_value++;
+      current_vol_step++;
     else
-      current_volume_value--;
+      current_vol_step--;
   }
 
   previous_index_value = get_index;
-  return (current_volume_value / 100.0);
+  return (current_vol_step / 100.0);
 }
 
 void mp3__display_volume(void) {
@@ -243,12 +243,12 @@ void mp3__display_volume(void) {
 
   mp3__clear_volume_positions();
 
-  if (current_volume_value < 10) {
+  if (current_vol_step < 10) {
     size_of_arr = 1;
     lcd__set_position(18, 4);
   }
 
-  else if (current_volume_value >= 10 && current_volume_value <= 99) {
+  else if (current_vol_step >= 10 && current_vol_step <= 99) {
     size_of_arr = 2;
     lcd__set_position(17, 4);
   }
@@ -260,7 +260,7 @@ void mp3__display_volume(void) {
 
   char arr[size_of_arr];
 
-  itoa(current_volume_value, arr, 10);
+  itoa(current_vol_step, arr, 10);
 
   for (int i = 0; i < size_of_arr; i++) {
     lcd__print(arr[i]);

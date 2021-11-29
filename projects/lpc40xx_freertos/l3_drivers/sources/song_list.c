@@ -1,9 +1,10 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-#include "song_list.h"
-#include <stdio.h>
-
 #include "ff.h"
+#include "lcd1602.h"
+#include "song_list.h"
 
 static song_memory_t list_of_songs[32];
 static size_t number_of_songs;
@@ -52,6 +53,11 @@ void song_list__populate(void) {
     }
     f_closedir(&dir);
   }
+
+  else {
+    display_no_sd_error();
+    exit(0);
+  }
 }
 
 size_t song_list__get_item_count(void) { return number_of_songs; }
@@ -66,4 +72,16 @@ const char *song_list__get_name_for_item(size_t item_number) {
   }
 
   return return_pointer;
+}
+
+void display_no_sd_error(void) {
+  char err_ms1[] = "=== Error";
+  char err_ms2[] = "No uSD Detected.";
+  char err_ms3[] = "Please reset after";
+  char err_ms4[] = "inserting one";
+
+  lcd__print_string(err_ms1, 1);
+  lcd__print_string(err_ms2, 2);
+  lcd__print_string(err_ms3, 3);
+  lcd__print_string(err_ms4, 4);
 }
