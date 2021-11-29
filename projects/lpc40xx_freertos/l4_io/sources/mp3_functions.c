@@ -42,7 +42,7 @@ static gpio_s mp3_reset;
 /* MP3 Vol Vars */
 static double volume_value = 0.0;
 static int previous_index_value = 0;
-static int current_vol_step = 0;
+static int current_vol_step = 50;
 
 void mp3__pins_init(void) {
   mp3_xcs = gpio__construct_with_function(GPIO__PORT_2, 7, GPIO__FUNCITON_0_IO_PIN);
@@ -83,7 +83,7 @@ void mp3__decoder_init(void) {
   printf("Status Read: 0x%04x\n", sj2_read_from_decoder(0x01));
   printf("Mode Read: 0x%04x\n", sj2_read_from_decoder(0x00));
 #endif
-  sj2_write_to_decoder(SCI_VOLUME, 0x7f7f);
+  sj2_write_to_decoder(SCI_VOLUME, 0xfefe);
 }
 
 void mp3__init(void) {
@@ -194,7 +194,10 @@ void mp3__volume_adjuster(void) {
 
   volume_value = mp3__get_volume_value();
 
-  uint8_t volume_value_for_one_ear = 254 * (1 - volume_value);
+  uint8_t volume_value_for_one_ear = 254 * (1 - ((volume_value * 0.50) + 0.5));
+
+  printf("Volume Value : %f\n", volume_value);
+  printf("Current Volume Step: %i\n\n.", current_vol_step);
   uint16_t volume_value_to_both_ears = (volume_value_for_one_ear << 8) | (volume_value_for_one_ear << 0);
 
   sj2_write_to_decoder(SCI_VOLUME, volume_value_to_both_ears);
@@ -206,7 +209,7 @@ void mp3__volume_adjuster(void) {
 double mp3__get_volume_value(void) {
   int get_index = encoder__get_index();
 
-  if (current_vol_step == 0) {
+  if (current_vol_step == 50) {
     if (get_index < previous_index_value) {
       previous_index_value = get_index;
       return 0;
@@ -239,43 +242,31 @@ double mp3__get_volume_value(void) {
 }
 
 void mp3__display_volume(void) {
-  int size_of_arr;
+
+  int vol_step_for_display = (current_vol_step - 50) / 3;
 
   mp3__clear_volume_positions();
+  lcd__set_position(3, 4);
 
-  if (current_vol_step < 10) {
-    size_of_arr = 1;
-    lcd__set_position(18, 4);
-  }
-
-  else if (current_vol_step >= 10 && current_vol_step <= 99) {
-    size_of_arr = 2;
-    lcd__set_position(17, 4);
+  if (current_vol_step == 100) {
+    for (int i = 0; i < 18; i++) {
+      lcd__print('=');
+    }
   }
 
   else {
-    size_of_arr = 3;
-    lcd__set_position(16, 4);
+    for (int i = 0; i < vol_step_for_display; i++) {
+      lcd__print('=');
+    }
   }
-
-  char arr[size_of_arr];
-
-  itoa(current_vol_step, arr, 10);
-
-  for (int i = 0; i < size_of_arr; i++) {
-    lcd__print(arr[i]);
-  }
-
-  lcd__set_position(19, 4);
-  lcd__print('%%');
 }
 
 void mp3__clear_volume_positions(void) {
-  char *clear = "   ";
+  char *clear = "-----------------";
 
-  lcd__set_position(16, 4);
+  lcd__set_position(3, 4);
 
-  for (int i = 0; i < 4; i++)
+  for (int i = 0; i < 18; i++)
     lcd__print(clear[i]);
 }
 
@@ -314,7 +305,7 @@ void mp3__display_now_playing(void) {
   lcd__clear();
   lcd__print_string("=== Playing ", 1);
   lcd__print_string(song_list__get_name_for_item(song_index), 2);
-  lcd__print_string("Volume:         ", 4);
+  lcd__print_string("Vol", 4);
   mp3__display_volume();
   xQueueSend(Q_songname, song_list__get_name_for_item(song_index), portMAX_DELAY);
 }
