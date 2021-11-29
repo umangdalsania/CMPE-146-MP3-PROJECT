@@ -258,7 +258,7 @@ void mp3__display_volume(void) {
     lcd__set_position(16, 4);
   }
 
-  char arr[current_volume_value];
+  char arr[size_of_arr];
 
   itoa(current_volume_value, arr, 10);
 

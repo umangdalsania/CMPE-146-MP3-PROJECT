@@ -11,7 +11,7 @@ static gpio_s lcd__read_write_select;
 static gpio_s lcd__enable;
 static gpio_s lcd__db7, lcd__db6, lcd__db5, lcd__db4, lcd__db3, lcd__db2, lcd__db1, lcd__db0;
 
-void lcd__clock(void) {
+void lcd__toggle(void) {
   gpio__set(lcd__enable);
   delay__ms(1);
   gpio__reset(lcd__enable);
@@ -31,7 +31,7 @@ void lcd__command(uint8_t command) {
   DB1_bit(((1 << 1) & command));
   DB0_bit(((1 << 0) & command));
 
-  lcd__clock();
+  lcd__toggle();
 }
 
 void lcd__clear(void) {
@@ -68,7 +68,7 @@ void lcd__print(uint8_t character) {
   DB1_bit(((1 << 1) & character));
   DB0_bit(((1 << 0) & character));
 
-  lcd__clock();
+  lcd__toggle();
 }
 
 void lcd__print_string(const char *song_name, int line) {
