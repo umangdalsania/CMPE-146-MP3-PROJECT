@@ -72,50 +72,78 @@ static void mp3_player_task(void *p) {
 
 static void mp3_control(void *p) {
   while (1) {
-    mp3__volume_adjuster();
+    if (treble_bass_menu == 0)
+      mp3__volume_adjuster();
+    else if (treble_bass_menu == 1)
+      mp3__treble_adjuster();
+    else if (treble_bass_menu == 2)
+      mp3__bass_adjuster();
+
     check_for_interrupt();
     vTaskDelay(50);
   }
 }
 
 void check_for_interrupt(void) {
-  if (xSemaphoreTakeFromISR(mp3_next_bin_sem, 0)) {
-    if (pause) {
+
+  if (xSemaphoreTakeFromISR(mp3_treble_bass_bin_sem, 0)) {
+    treble_bass_menu++;
+    if (treble_bass_menu > 2)
+      treble_bass_menu = 0;
+    printf("treble_and_bass_value Read:%d\n", treble_bass_menu);
+
+    if (treble_bass_menu == 1)
+      mp3__TREBLE_BUTTON_MENU_handler();
+    else if (treble_bass_menu == 2)
+      mp3__BASS_BUTTON_MENU_handler();
+    // else if (pause)
+    // display_menu_handler();
+    else {
+      display_now_playing_handler();
+      if (pause) {
+        vTaskSuspend(mp3_player_handle);
+        lcd__print_string("=== Paused", 1);
+      }
+    }
+  } else if (treble_bass_menu == 0) {
+    if (xSemaphoreTakeFromISR(mp3_next_bin_sem, 0)) {
+      if (pause) {
+        pause = false;
+        vTaskResume(mp3_player_handle);
+      }
+      mp3__NEXT_handler();
+    }
+
+    if (xSemaphoreTakeFromISR(mp3_prev_bin_sem, 0)) {
+      if (pause) {
+        pause = false;
+        vTaskResume(mp3_player_handle);
+      }
+      mp3__PREV_handler();
+    }
+
+    if (xSemaphoreTakeFromISR(mp3_pause_bin_sem, 0)) {
+      if (pause) {
+        lcd__print_string("=== Paused", 1);
+        vTaskSuspend(mp3_player_handle);
+      } else {
+        lcd__print_string("=== Playing", 1);
+        vTaskResume(mp3_player_handle);
+      }
+    }
+
+    if (xSemaphoreTakeFromISR(mp3_move_up_bin_sem, 0)) {
+      mp3__MOVE_UP_handler();
+    }
+
+    if (xSemaphoreTakeFromISR(mp3_move_down_bin_sem, 0)) {
+      mp3__MOVE_DOWN_handler();
+    }
+
+    if (xSemaphoreTakeFromISR(mp3_select_song_bin_sem, 0)) {
+      mp3__CENTER_BUTTON_4_MENU_handler();
+      vTaskResume(mp3_player_handle);
       pause = false;
-      vTaskResume(mp3_player_handle);
     }
-    mp3__NEXT_handler();
-  }
-
-  if (xSemaphoreTakeFromISR(mp3_prev_bin_sem, 0)) {
-    if (pause) {
-      pause = false;
-      vTaskResume(mp3_player_handle);
-    }
-    mp3__PREV_handler();
-  }
-
-  if (xSemaphoreTakeFromISR(mp3_pause_bin_sem, 0)) {
-    if (pause) {
-      lcd__print_string("=== Paused", 1);
-      vTaskSuspend(mp3_player_handle);
-    } else {
-      lcd__print_string("=== Playing", 1);
-      vTaskResume(mp3_player_handle);
-    }
-  }
-
-  if (xSemaphoreTakeFromISR(mp3_move_up_bin_sem, 0)) {
-    mp3__MOVE_UP_handler();
-  }
-
-  if (xSemaphoreTakeFromISR(mp3_move_down_bin_sem, 0)) {
-    mp3__MOVE_DOWN_handler();
-  }
-
-  if (xSemaphoreTakeFromISR(mp3_select_song_bin_sem, 0)) {
-    mp3__CENTER_BUTTON_4_MENU_handler();
-    vTaskResume(mp3_player_handle);
-    pause = false;
   }
 }
