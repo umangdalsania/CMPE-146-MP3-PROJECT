@@ -6,6 +6,7 @@
 #include "mp3_functions.h"
 
 static function_pointer_t gpio_callbacks[32];
+bool interrupt_received = false;
 
 /*===========================================================*/
 /*==================| MP3 GPIO Interrupts |==================*/
@@ -61,15 +62,48 @@ void mp3__clear_interrupt(int pin_num) { LPC_GPIOINT->IO2IntClr |= (1 << pin_num
 /*==================| MP3 Menu Interrupts |==================*/
 /*===========================================================*/
 
-void mp3__NEXT_ISR(void) { xSemaphoreGiveFromISR(mp3_next_bin_sem, NULL); }
-void mp3__PREV_ISR(void) { xSemaphoreGiveFromISR(mp3_prev_bin_sem, NULL); }
-void mp3__PLAY_PAUSE_ISR(void) {
-  pause = !pause;
-  xSemaphoreGiveFromISR(mp3_pause_bin_sem, NULL);
+void mp3__NEXT_ISR(void) {
+  if (interrupt_received == false) {
+    interrupt_received = true;
+    xSemaphoreGiveFromISR(mp3_next_bin_sem, NULL);
+  }
 }
-void mp3__MOVE_UP_ISR(void) { xSemaphoreGiveFromISR(mp3_move_up_bin_sem, NULL); }
-void mp3__MOVE_DOWN_ISR(void) { xSemaphoreGiveFromISR(mp3_move_down_bin_sem, NULL); }
-void mp3__CENTER_BUTTON_4_MENU_ISR(void) { xSemaphoreGiveFromISR(mp3_select_song_bin_sem, NULL); }
+
+void mp3__PREV_ISR(void) {
+  if (interrupt_received == false) {
+    interrupt_received = true;
+    xSemaphoreGiveFromISR(mp3_prev_bin_sem, NULL);
+  }
+}
+
+void mp3__PLAY_PAUSE_ISR(void) {
+  if (interrupt_received == false) {
+    interrupt_received = true;
+    pause = !pause;
+    xSemaphoreGiveFromISR(mp3_pause_bin_sem, NULL);
+  }
+}
+
+void mp3__MOVE_UP_ISR(void) {
+  if (interrupt_received == false) {
+    interrupt_received = true;
+    xSemaphoreGiveFromISR(mp3_move_up_bin_sem, NULL);
+  }
+}
+
+void mp3__MOVE_DOWN_ISR(void) {
+  if (interrupt_received == false) {
+    interrupt_received = true;
+    xSemaphoreGiveFromISR(mp3_move_down_bin_sem, NULL);
+  }
+}
+
+void mp3__CENTER_BUTTON_4_MENU_ISR(void) {
+  if (interrupt_received == false) {
+    interrupt_received = true;
+    xSemaphoreGiveFromISR(mp3_select_song_bin_sem, NULL);
+  }
+}
 
 void mp3__NEXT_handler(void) {
   lcd__clear();
