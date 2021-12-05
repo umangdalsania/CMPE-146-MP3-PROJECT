@@ -82,7 +82,7 @@ static void mp3_control(void *p) {
 
 void check_for_interrupt(void) {
   if (interrupt_received) {
-    
+
     if (xSemaphoreTakeFromISR(mp3_next_bin_sem, 0)) {
       if (pause) {
         pause = false;
@@ -122,8 +122,8 @@ void check_for_interrupt(void) {
       vTaskResume(mp3_player_handle);
       pause = false;
     }
-    
-      vTaskDelay(300);
+
+    vTaskDelay(300);
     interrupt_received = false;
   }
 }

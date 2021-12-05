@@ -106,6 +106,7 @@ void mp3__CENTER_BUTTON_4_MENU_ISR(void) {
 }
 
 void mp3__NEXT_handler(void) {
+  playing_mode = true;
   lcd__clear();
   mp3__increment_song_index();
   mp3__display_now_playing();
@@ -113,6 +114,7 @@ void mp3__NEXT_handler(void) {
 }
 
 void mp3__PREV_handler(void) {
+  playing_mode = true;
   lcd__clear();
   mp3__decrement_song_index();
   mp3__display_now_playing();
