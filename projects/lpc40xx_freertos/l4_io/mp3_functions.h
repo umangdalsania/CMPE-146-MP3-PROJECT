@@ -48,7 +48,7 @@ void sj2_to_mp3_decoder(char byte);
 void mp3__volume_adjuster(void);
 double mp3__get_volume_value(void);
 
-int mp3_get_treble_and_bass_value(void);
+uint16_t mp3_get_treble_and_bass_value(void);
 void mp3__treble_adjuster(void);
 void mp3__update_treble_value(void);
 void mp3__bass_adjuster(void);

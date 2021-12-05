@@ -48,10 +48,13 @@ static int previous_index_value = 0;
 static int current_vol_step = 50;
 
 /* MP3 Treble and Bass Vars */
-static int current_ST_AMPLITUDE = 0;
-static int current_ST_FREQLIMIT = 15;
-static int current_SB_AMPLITUDE = 0;
-static int current_SB_FREQLIMIT = 15;
+// Combined current_ST_AMPLITUDE and current_ST_FREQLIMIT
+static uint8_t ST_AMPLITUDE_conversion_lookup_table[16] = {0xff, 0xef, 0xdf, 0xcf, 0xbf, 0xaf, 0x9f, 0x8f,
+                                                           0x0f, 0x1f, 0x2f, 0x3f, 0x4f, 0x5f, 0x6f, 0x7f};
+static uint8_t current_ST_AMPLITUDE = 8;
+// static uint8_t current_ST_FREQLIMIT = 15;
+static uint8_t current_SB_AMPLITUDE = 0;
+static uint8_t current_SB_FREQLIMIT = 15;
 
 void mp3__pins_init(void) {
   mp3_xcs = gpio__construct_with_function(GPIO__PORT_2, 7, GPIO__FUNCITON_0_IO_PIN);
@@ -288,15 +291,31 @@ void mp3__clear_volume_positions(void) {
 // SB_FREQLIMIT 3:0    Lower limit frequency in 10 Hz steps (2..15)
 /*===========================================================*/
 
-int mp3_get_treble_and_bass_value(void) {
+uint16_t mp3_get_treble_and_bass_value(void) {
+
+  printf("----------------------------------------\n");
+  printf("current_ST_AMPLITUDE Read: %d\n", current_ST_AMPLITUDE);
+  printf("current_ST_AMPLITUDE Read:  0x%4x\n", current_ST_AMPLITUDE);
 
   uint16_t treble_and_bass_value = 0;
-  treble_and_bass_value |= (current_ST_AMPLITUDE << 12);
-  treble_and_bass_value |= (current_ST_FREQLIMIT << 8);
-  treble_and_bass_value |= (current_SB_AMPLITUDE << 4);
-  treble_and_bass_value |= (current_SB_FREQLIMIT << 0);
 
+  // treble_and_bass_value |= (ST_AMPLITUDE_conversion_lookup_table[current_ST_AMPLITUDE] << 8) |
+  // (current_SB_AMPLITUDE);
+
+  treble_and_bass_value |= (ST_AMPLITUDE_conversion_lookup_table[current_ST_AMPLITUDE] << 8);
   printf("treble_and_bass_value Read: 0x%4x\n", treble_and_bass_value);
+
+  // treble_and_bass_value |= ((current_ST_AMPLITUDE - 8) << 12);
+  // treble_and_bass_value |= (current_ST_FREQLIMIT << 8);
+
+  treble_and_bass_value |= (current_SB_AMPLITUDE << 4);
+  printf("current_SB_AMPLITUDE Read:  0x%4x\n", current_SB_AMPLITUDE);
+  printf("treble_and_bass_value Read: 0x%4x\n", treble_and_bass_value);
+
+  treble_and_bass_value |= (current_SB_FREQLIMIT << 0);
+  printf("current_SB_FREQLIMIT Read:  0x%4x\n", current_SB_FREQLIMIT);
+  printf("treble_and_bass_value Read: 0x%4x\n", treble_and_bass_value);
+  printf("----------------------------------------\n");
 
   return treble_and_bass_value;
 }
@@ -351,15 +370,11 @@ void mp3__update_treble_value(void) {
 
 void mp3__display_treble(void) {
 
-  int treble_step_for_display = current_ST_AMPLITUDE;
+  int8_t treble_step_for_display = current_ST_AMPLITUDE;
   char treble_step_for_display_str[10];
 
-  if (treble_step_for_display > 7 && treble_step_for_display < 16) {
-    treble_step_for_display = treble_step_for_display - 7;
-    sprintf(treble_step_for_display_str, "Treble:-%d", treble_step_for_display);
-  } else {
-    sprintf(treble_step_for_display_str, "Treble:%d", treble_step_for_display);
-  }
+  treble_step_for_display = treble_step_for_display - 8;
+  sprintf(treble_step_for_display_str, "Treble:%2d", treble_step_for_display);
   lcd__print_string(treble_step_for_display_str, 3);
 }
 
@@ -413,7 +428,7 @@ void mp3__update_bass_value(void) {
 
 void mp3__display_bass(void) {
 
-  int bass_step_for_display = current_SB_AMPLITUDE;
+  uint8_t bass_step_for_display = current_SB_AMPLITUDE;
   char bass_step_for_display_str[10];
   sprintf(bass_step_for_display_str, "Bass:%d", bass_step_for_display);
   lcd__print_string(bass_step_for_display_str, 3);
