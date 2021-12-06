@@ -28,6 +28,7 @@ SemaphoreHandle_t mp3_select_song_bin_sem;
 SemaphoreHandle_t mp3_treble_bass_bin_sem;
 
 volatile bool pause;
+volatile bool in_bass;
 volatile int treble_bass_menu;
 volatile bool playing_mode;
 volatile size_t song_index;
@@ -120,6 +121,7 @@ void mp3__init(void) {
   pause = false;
   treble_bass_menu = 0;
   playing_mode = false;
+  in_bass = false;
   song_index = song_list__get_item_count();
   song_list__populate();
   mp3__print_songs_in_menu();
@@ -471,15 +473,8 @@ void mp3__display_now_playing(void) {
   lcd__print_string(song_list__get_name_for_item(song_index), 2);
   lcd__print_string("Vol", 4);
   mp3__display_volume();
-  xQueueSend(Q_songname, song_list__get_name_for_item(song_index), portMAX_DELAY);
-}
-
-void mp3__display_now_playing_from_bass(void) {
-  lcd__clear();
-  lcd__print_string("=== Playing ", 1);
-  lcd__print_string(song_list__get_name_for_item(song_index), 2);
-  lcd__print_string("Vol", 4);
-  mp3__display_volume();
+  if (!in_bass)
+    xQueueSend(Q_songname, song_list__get_name_for_item(song_index), portMAX_DELAY);
 }
 
 void mp3__display_treble_menu(void) {

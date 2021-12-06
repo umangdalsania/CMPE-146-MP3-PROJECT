@@ -147,7 +147,6 @@ void mp3__CENTER_BUTTON_4_MENU_handler(void) {
 
 void mp3__BASS_BUTTON_MENU_handler(void) {
   mp3__attach_interrupt(get_extra_button(), mp3__TREBLE_BASS_BUTTON_MENU_ISR);
-  lcd__clear();
   mp3__display_bass_menu();
 }
 

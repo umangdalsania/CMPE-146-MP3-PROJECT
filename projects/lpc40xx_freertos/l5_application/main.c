@@ -14,6 +14,7 @@
 
 bool player_mode = false;
 extern bool interrupt_received;
+extern bool in_bass;
 TaskHandle_t mp3_player_handle; // Used to Resume or Suspend MP3 Player
 
 /* MP3 Related Functions */
@@ -58,7 +59,6 @@ static void mp3_player_task(void *p) {
 
   while (1) {
     if (xQueueReceive(Q_songdata, &bytes_512, portMAX_DELAY)) {
-
       for (int i = 0; i < sizeof(bytes_512); i++) {
         while (!gpio__get(mp3_dreq)) {
           ; // If decoder buffer is full
@@ -86,6 +86,7 @@ void check_for_interrupt(void) {
 
   if (interrupt_received) {
     if (xSemaphoreTakeFromISR(mp3_treble_bass_bin_sem, 0)) {
+      in_bass = true;
       treble_bass_menu++;
       if (treble_bass_menu > 1)
         treble_bass_menu = 0;
@@ -93,7 +94,7 @@ void check_for_interrupt(void) {
       if (treble_bass_menu == 1)
         mp3__BASS_BUTTON_MENU_handler();
       else {
-        mp3__display_now_playing_from_bass();
+        mp3__display_now_playing();
         if (pause) {
           lcd__print_string("=== Paused", 1);
         }
@@ -101,6 +102,7 @@ void check_for_interrupt(void) {
     }
 
     else {
+      in_bass = false;
       if (xSemaphoreTakeFromISR(mp3_prev_bin_sem, 0)) {
         if (pause) {
           pause = false;

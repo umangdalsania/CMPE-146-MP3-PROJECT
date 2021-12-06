@@ -77,7 +77,6 @@ void mp3__increment_song_index(void);
 void mp3__decrement_song_index(void);
 void mp3__print_songs_in_menu(void);
 void mp3__display_now_playing(void);
-void mp3__display_now_playing_from_bass(void);
 void mp3__display_treble_menu(void);
 void mp3__display_bass_menu(void);
 void mp3__attach_interrupts_for_menu(void);
