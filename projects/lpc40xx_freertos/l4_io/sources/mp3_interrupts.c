@@ -8,6 +8,7 @@
 #include "mp3_functions.h"
 
 static function_pointer_t gpio_callbacks[32];
+bool interrupt_received = false;
 
 /*===========================================================*/
 /*==================| MP3 GPIO Interrupts |==================*/
@@ -64,19 +65,52 @@ void mp3__clear_interrupt(int pin_num) { LPC_GPIOINT->IO2IntClr |= (1 << pin_num
 /*==================| MP3 Menu Interrupts |==================*/
 /*===========================================================*/
 
-void mp3__NEXT_ISR(void) { xSemaphoreGiveFromISR(mp3_next_bin_sem, NULL); }
-void mp3__PREV_ISR(void) { xSemaphoreGiveFromISR(mp3_prev_bin_sem, NULL); }
-void mp3__PLAY_PAUSE_ISR(void) {
-  pause = !pause;
-  xSemaphoreGiveFromISR(mp3_pause_bin_sem, NULL);
+void mp3__NEXT_ISR(void) {
+  if (interrupt_received == false) {
+    interrupt_received = true;
+    xSemaphoreGiveFromISR(mp3_next_bin_sem, NULL);
+  }
 }
-void mp3__MOVE_UP_ISR(void) { xSemaphoreGiveFromISR(mp3_move_up_bin_sem, NULL); }
-void mp3__MOVE_DOWN_ISR(void) { xSemaphoreGiveFromISR(mp3_move_down_bin_sem, NULL); }
-void mp3__CENTER_BUTTON_4_MENU_ISR(void) { xSemaphoreGiveFromISR(mp3_select_song_bin_sem, NULL); }
-
-void mp3__TREBLE_BASS_BUTTON_MENU_ISR(void) { xSemaphoreGiveFromISR(mp3_treble_bass_bin_sem, NULL); }
+void mp3__PREV_ISR(void) {
+  if (interrupt_received == false) {
+    interrupt_received = true;
+    xSemaphoreGiveFromISR(mp3_prev_bin_sem, NULL);
+  }
+}
+void mp3__PLAY_PAUSE_ISR(void) {
+  if (interrupt_received == false) {
+    interrupt_received = true;
+    pause = !pause;
+    xSemaphoreGiveFromISR(mp3_pause_bin_sem, NULL);
+  }
+}
+void mp3__MOVE_UP_ISR(void) {
+  if (interrupt_received == false) {
+    interrupt_received = true;
+    xSemaphoreGiveFromISR(mp3_move_up_bin_sem, NULL);
+  }
+}
+void mp3__MOVE_DOWN_ISR(void) {
+  if (interrupt_received == false) {
+    interrupt_received = true;
+    xSemaphoreGiveFromISR(mp3_move_down_bin_sem, NULL);
+  }
+}
+void mp3__CENTER_BUTTON_4_MENU_ISR(void) {
+  if (interrupt_received == false) {
+    interrupt_received = true;
+    xSemaphoreGiveFromISR(mp3_select_song_bin_sem, NULL);
+  }
+}
+void mp3__TREBLE_BASS_BUTTON_MENU_ISR(void) {
+  if (interrupt_received == false) {
+    interrupt_received = true;
+    xSemaphoreGiveFromISR(mp3_treble_bass_bin_sem, NULL);
+  }
+}
 
 void mp3__NEXT_handler(void) {
+  playing_mode = true;
   lcd__clear();
   mp3__increment_song_index();
   mp3__display_now_playing();
@@ -84,12 +118,12 @@ void mp3__NEXT_handler(void) {
 }
 
 void mp3__PREV_handler(void) {
+  playing_mode = true;
   lcd__clear();
   mp3__decrement_song_index();
   mp3__display_now_playing();
   xQueueSend(Q_songname, song_list__get_name_for_item(song_index), portMAX_DELAY);
 }
-
 void mp3__MOVE_UP_handler(void) {
   playing_mode = false;
   mp3__attach_interrupt(get_center_button(), mp3__CENTER_BUTTON_4_MENU_ISR);
@@ -97,7 +131,6 @@ void mp3__MOVE_UP_handler(void) {
   mp3__decrement_song_index();
   mp3__print_songs_in_menu();
 }
-
 void mp3__MOVE_DOWN_handler(void) {
   playing_mode = false;
   mp3__attach_interrupt(get_center_button(), mp3__CENTER_BUTTON_4_MENU_ISR);
@@ -105,7 +138,6 @@ void mp3__MOVE_DOWN_handler(void) {
   mp3__increment_song_index();
   mp3__print_songs_in_menu();
 }
-
 void mp3__CENTER_BUTTON_4_MENU_handler(void) {
   playing_mode = true;
   mp3__attach_interrupt(get_center_button(), mp3__PLAY_PAUSE_ISR);

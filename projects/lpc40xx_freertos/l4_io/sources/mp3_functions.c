@@ -261,7 +261,7 @@ void mp3__display_volume(void) {
   lcd__set_position(3, 4);
 
   if (current_vol_step == 100) {
-    for (int i = 0; i < 18; i++) {
+    for (int i = 0; i < 17; i++) {
       lcd__print('=');
     }
   }
@@ -278,7 +278,7 @@ void mp3__clear_volume_positions(void) {
 
   lcd__set_position(3, 4);
 
-  for (int i = 0; i < 18; i++)
+  for (int i = 0; i < 17; i++)
     lcd__print(clear[i]);
 }
 
