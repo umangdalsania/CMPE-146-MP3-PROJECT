@@ -89,16 +89,11 @@ void check_for_interrupt(void) {
   if (interrupt_received) {
     if (xSemaphoreTakeFromISR(mp3_treble_bass_bin_sem, 0)) {
       treble_bass_menu++;
-      if (treble_bass_menu > 2)
+      if (treble_bass_menu > 1)
         treble_bass_menu = 0;
-      printf("treble_and_bass_value Read:%d\n", treble_bass_menu);
 
       if (treble_bass_menu == 1)
-        mp3__TREBLE_BUTTON_MENU_handler();
-      else if (treble_bass_menu == 2)
         mp3__BASS_BUTTON_MENU_handler();
-      // else if (pause)
-      // display_menu_handler();
       else {
         mp3__display_now_playing();
         if (pause) {
