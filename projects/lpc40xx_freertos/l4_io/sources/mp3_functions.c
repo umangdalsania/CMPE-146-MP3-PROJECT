@@ -474,6 +474,14 @@ void mp3__display_now_playing(void) {
   xQueueSend(Q_songname, song_list__get_name_for_item(song_index), portMAX_DELAY);
 }
 
+void mp3__display_now_playing_from_bass(void) {
+  lcd__clear();
+  lcd__print_string("=== Playing ", 1);
+  lcd__print_string(song_list__get_name_for_item(song_index), 2);
+  lcd__print_string("Vol", 4);
+  mp3__display_volume();
+}
+
 void mp3__display_treble_menu(void) {
   lcd__clear();
   lcd__print_string("=== Treble Menu", 1);

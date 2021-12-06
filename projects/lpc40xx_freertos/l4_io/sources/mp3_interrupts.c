@@ -157,11 +157,6 @@ void mp3__TREBLE_BUTTON_MENU_handler(void) {
   mp3__display_treble_menu();
 }
 
-void display_now_playing_handler(void) {
-  lcd__clear();
-  mp3__display_now_playing();
-}
-
 void display_menu_handler(void) {
   lcd__clear();
   mp3__print_songs_in_menu();

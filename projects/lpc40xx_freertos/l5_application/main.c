@@ -75,8 +75,6 @@ static void mp3_control(void *p) {
     if (treble_bass_menu == 0)
       mp3__volume_adjuster();
     else if (treble_bass_menu == 1)
-      mp3__treble_adjuster();
-    else if (treble_bass_menu == 2)
       mp3__bass_adjuster();
 
     check_for_interrupt();
@@ -95,7 +93,7 @@ void check_for_interrupt(void) {
       if (treble_bass_menu == 1)
         mp3__BASS_BUTTON_MENU_handler();
       else {
-        mp3__display_now_playing();
+        mp3__display_now_playing_from_bass();
         if (pause) {
           lcd__print_string("=== Paused", 1);
         }
