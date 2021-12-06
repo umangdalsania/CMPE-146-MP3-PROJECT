@@ -1,7 +1,7 @@
 #pragma once
 
 typedef struct {
-  char song_name[19];
+  char song_name[20];
 } songname_t;
 
 typedef struct {

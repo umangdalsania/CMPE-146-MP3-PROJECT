@@ -44,7 +44,6 @@ static void mp3_reader_task(void *p) {
 
   while (1) {
     xQueueReceive(Q_songname, &name.song_name, portMAX_DELAY);
-
     if (open_file(&file_handler, name.song_name)) {
       read_from_file(&file_handler, buffer.song_data, &Bytes_Read);
       close_file(&file_handler);
@@ -101,14 +100,14 @@ void check_for_interrupt(void) {
       // else if (pause)
       // display_menu_handler();
       else {
-        display_now_playing_handler();
+        mp3__display_now_playing();
         if (pause) {
-          vTaskSuspend(mp3_player_handle);
           lcd__print_string("=== Paused", 1);
         }
       }
-    } else if (treble_bass_menu == 0) {
+    }
 
+    else {
       if (xSemaphoreTakeFromISR(mp3_prev_bin_sem, 0)) {
         if (pause) {
           pause = false;
@@ -134,12 +133,15 @@ void check_for_interrupt(void) {
           vTaskResume(mp3_player_handle);
         }
       }
+
       if (xSemaphoreTakeFromISR(mp3_move_up_bin_sem, 0)) {
         mp3__MOVE_UP_handler();
       }
+
       if (xSemaphoreTakeFromISR(mp3_move_down_bin_sem, 0)) {
         mp3__MOVE_DOWN_handler();
       }
+
       if (xSemaphoreTakeFromISR(mp3_select_song_bin_sem, 0)) {
         mp3__CENTER_BUTTON_4_MENU_handler();
         vTaskResume(mp3_player_handle);
