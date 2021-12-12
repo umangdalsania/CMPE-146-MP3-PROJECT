@@ -14,7 +14,6 @@
 
 bool player_mode = false;
 extern bool interrupt_received;
-extern bool in_bass;
 TaskHandle_t mp3_player_handle; // Used to Resume or Suspend MP3 Player
 
 /* MP3 Related Functions */
@@ -88,7 +87,6 @@ void check_for_interrupt(void) {
 
   if (interrupt_received) {
     if (xSemaphoreTakeFromISR(mp3_treble_bass_bin_sem, 0)) {
-      in_bass = true;
       treble_bass_menu++;
       if (treble_bass_menu > 2)
         treble_bass_menu = 0;
@@ -106,7 +104,6 @@ void check_for_interrupt(void) {
     }
 
     else {
-      in_bass = false;
       if (xSemaphoreTakeFromISR(mp3_prev_bin_sem, 0)) {
         if (pause) {
           pause = false;
