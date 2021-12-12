@@ -139,7 +139,9 @@ void mp3__MOVE_DOWN_handler(void) {
   mp3__print_songs_in_menu();
 }
 void mp3__CENTER_BUTTON_4_MENU_handler(void) {
+  playing_mode = true;
   mp3__attach_interrupt(get_center_button(), mp3__PLAY_PAUSE_ISR);
+  lcd__clear();
   mp3__display_now_playing();
 }
 
@@ -150,7 +152,6 @@ void mp3__BASS_BUTTON_MENU_handler(void) {
 
 void mp3__TREBLE_BUTTON_MENU_handler(void) {
   mp3__attach_interrupt(get_extra_button(), mp3__TREBLE_BASS_BUTTON_MENU_ISR);
-  lcd__clear();
   mp3__display_treble_menu();
 }
 
