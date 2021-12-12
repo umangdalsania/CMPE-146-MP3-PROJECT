@@ -75,6 +75,8 @@ static void mp3_control(void *p) {
     if (treble_bass_menu == 0)
       mp3__volume_adjuster();
     else if (treble_bass_menu == 1)
+      mp3__treble_adjuster();
+    else if (treble_bass_menu == 2)
       mp3__bass_adjuster();
 
     check_for_interrupt();
@@ -88,10 +90,12 @@ void check_for_interrupt(void) {
     if (xSemaphoreTakeFromISR(mp3_treble_bass_bin_sem, 0)) {
       in_bass = true;
       treble_bass_menu++;
-      if (treble_bass_menu > 1)
+      if (treble_bass_menu > 2)
         treble_bass_menu = 0;
 
       if (treble_bass_menu == 1)
+        mp3__TREBLE_BUTTON_MENU_handler();
+      else if (treble_bass_menu == 2)
         mp3__BASS_BUTTON_MENU_handler();
       else {
         mp3__display_now_playing();
