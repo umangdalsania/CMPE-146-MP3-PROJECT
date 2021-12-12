@@ -50,8 +50,8 @@ static int current_vol_step = 50;
 
 /* MP3 Treble and Bass Vars */
 // Combined current_ST_AMPLITUDE and current_ST_FREQLIMIT
-static uint8_t ST_AMPLITUDE_conversion_lookup_table[16] = {0xff, 0xef, 0xdf, 0xcf, 0xbf, 0xaf, 0x9f, 0x8f,
-                                                           0x0f, 0x1f, 0x2f, 0x3f, 0x4f, 0x5f, 0x6f, 0x7f};
+static uint8_t ST_AMPLITUDE_conversion_lookup_table[16] = {0xf1, 0xe1, 0xd1, 0xc1, 0xb1, 0xa1, 0x91, 0x81,
+                                                           0x01, 0x11, 0x21, 0x31, 0x41, 0x51, 0x61, 0x71};
 static uint8_t current_ST_AMPLITUDE = 8;
 // static uint8_t current_ST_FREQLIMIT = 15;
 static uint8_t current_SB_AMPLITUDE = 0;
@@ -98,7 +98,7 @@ void mp3__decoder_init(void) {
 #endif
   sj2_write_to_decoder(SCI_VOLUME, 0xfefe);
 
-  sj2_write_to_decoder(SCI_BASS, 0x0f0f);
+  sj2_write_to_decoder(SCI_BASS, 0x010f);
 }
 
 void mp3__init(void) {
