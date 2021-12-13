@@ -8,6 +8,7 @@
 #define SCI_MODE 0x0
 #define SCI_CLOCKF 0x3
 #define SCI_VOLUME 0xB
+#define SCI_BASS 0x2
 
 #define DEBUG 0
 
@@ -24,8 +25,10 @@ SemaphoreHandle_t mp3_pause_bin_sem;
 SemaphoreHandle_t mp3_move_up_bin_sem;
 SemaphoreHandle_t mp3_move_down_bin_sem;
 SemaphoreHandle_t mp3_select_song_bin_sem;
+SemaphoreHandle_t mp3_treble_bass_bin_sem;
 
 volatile bool pause;
+volatile int treble_bass_menu;
 volatile bool playing_mode;
 volatile size_t song_index;
 
@@ -43,6 +46,15 @@ static gpio_s mp3_reset;
 static double volume_value = 0.0;
 static int previous_index_value = 0;
 static int current_vol_step = 50;
+
+/* MP3 Treble and Bass Vars */
+// Combined current_ST_AMPLITUDE and current_ST_FREQLIMIT
+static uint8_t ST_AMPLITUDE_conversion_lookup_table[16] = {0xf1, 0xe1, 0xd1, 0xc1, 0xb1, 0xa1, 0x91, 0x81,
+                                                           0x01, 0x11, 0x21, 0x31, 0x41, 0x51, 0x61, 0x71};
+static uint8_t current_ST_AMPLITUDE = 8;
+// static uint8_t current_ST_FREQLIMIT = 15;
+static uint8_t current_SB_AMPLITUDE = 0;
+static uint8_t current_SB_FREQLIMIT = 15;
 
 void mp3__pins_init(void) {
   mp3_xcs = gpio__construct_with_function(GPIO__PORT_2, 7, GPIO__FUNCITON_0_IO_PIN);
@@ -84,6 +96,8 @@ void mp3__decoder_init(void) {
   printf("Mode Read: 0x%04x\n", sj2_read_from_decoder(0x00));
 #endif
   sj2_write_to_decoder(SCI_VOLUME, 0xfefe);
+
+  sj2_write_to_decoder(SCI_BASS, 0x010f);
 }
 
 void mp3__init(void) {
@@ -98,11 +112,13 @@ void mp3__init(void) {
   mp3_move_up_bin_sem = xSemaphoreCreateBinary();
   mp3_move_down_bin_sem = xSemaphoreCreateBinary();
   mp3_select_song_bin_sem = xSemaphoreCreateBinary();
+  mp3_treble_bass_bin_sem = xSemaphoreCreateBinary();
 
   Q_songname = xQueueCreate(1, sizeof(songname_t));
   Q_songdata = xQueueCreate(1, sizeof(songdata_t));
 
   pause = false;
+  treble_bass_menu = 0;
   playing_mode = false;
   song_index = song_list__get_item_count();
   song_list__populate();
@@ -267,6 +283,140 @@ void mp3__clear_volume_positions(void) {
 }
 
 /*===========================================================*/
+/*=================| SCI_BASS |==================*/
+// Name         Bits   Description
+// ST_AMPLITUDE 15:12  Treble Control in 1.5 dB steps (-8..7, 0 = off)
+// ST_FREQLIMIT 11:8   Lower limit frequency in 1000 Hz steps (1..15)
+// SB_AMPLITUDE 7:4    Bass Enhancement in 1 dB steps (0..15, 0 = off)
+// SB_FREQLIMIT 3:0    Lower limit frequency in 10 Hz steps (2..15)
+/*===========================================================*/
+
+uint16_t mp3_get_treble_and_bass_value(void) {
+
+  uint16_t treble_and_bass_value = 0;
+  treble_and_bass_value |= (ST_AMPLITUDE_conversion_lookup_table[current_ST_AMPLITUDE] << 8);
+
+  treble_and_bass_value |= (current_SB_AMPLITUDE << 4);
+  treble_and_bass_value |= (current_SB_FREQLIMIT << 0);
+
+  return treble_and_bass_value;
+}
+
+void mp3__treble_adjuster(void) {
+
+  if (previous_index_value == encoder__get_index()) {
+    return;
+  }
+
+  uint16_t treble_and_bass_value = 0;
+  mp3__update_treble_value();
+  treble_and_bass_value = mp3_get_treble_and_bass_value();
+
+  sj2_write_to_decoder(SCI_BASS, treble_and_bass_value);
+  mp3__display_treble();
+}
+
+void mp3__update_treble_value(void) {
+  int get_index = encoder__get_index();
+
+  if (current_ST_AMPLITUDE == 0) {
+    if (get_index < previous_index_value) {
+      previous_index_value = get_index;
+      return;
+    }
+
+    else
+      current_ST_AMPLITUDE++;
+  }
+
+  else if (current_ST_AMPLITUDE == 15) {
+    if (get_index > previous_index_value) {
+      previous_index_value = get_index;
+      return;
+    }
+
+    else
+      current_ST_AMPLITUDE--;
+  }
+
+  else {
+    if (get_index > previous_index_value)
+      current_ST_AMPLITUDE++;
+    else
+      current_ST_AMPLITUDE--;
+  }
+
+  previous_index_value = get_index;
+  return;
+}
+
+void mp3__display_treble(void) {
+
+  int8_t treble_step_for_display = current_ST_AMPLITUDE;
+  char treble_step_for_display_str[10];
+
+  treble_step_for_display = treble_step_for_display - 8;
+  sprintf(treble_step_for_display_str, "Treble:%2d", treble_step_for_display);
+  lcd__print_string(treble_step_for_display_str, 3);
+}
+
+void mp3__bass_adjuster(void) {
+
+  if (previous_index_value == encoder__get_index()) {
+    return;
+  }
+
+  uint16_t treble_and_bass_value = 0;
+  mp3__update_bass_value();
+  treble_and_bass_value = mp3_get_treble_and_bass_value();
+
+  sj2_write_to_decoder(SCI_BASS, treble_and_bass_value);
+  mp3__display_bass();
+}
+
+void mp3__update_bass_value(void) {
+  int get_index = encoder__get_index();
+
+  if (current_SB_AMPLITUDE == 0) {
+    if (get_index < previous_index_value) {
+      previous_index_value = get_index;
+      return;
+    }
+
+    else
+      current_SB_AMPLITUDE++;
+  }
+
+  else if (current_SB_AMPLITUDE == 15) {
+    if (get_index > previous_index_value) {
+      previous_index_value = get_index;
+      return;
+    }
+
+    else
+      current_SB_AMPLITUDE--;
+  }
+
+  else {
+    if (get_index > previous_index_value)
+      current_SB_AMPLITUDE++;
+    else
+      current_SB_AMPLITUDE--;
+  }
+
+  previous_index_value = get_index;
+  return;
+}
+
+void mp3__display_bass(void) {
+
+  uint8_t bass_step_for_display = current_SB_AMPLITUDE;
+  char bass_step_for_display_str[10];
+  sprintf(bass_step_for_display_str, "Bass:%d", bass_step_for_display);
+  lcd__print_string(bass_step_for_display_str, 3);
+}
+
+/*===========================================================*/
 /*==================| MP3 Menu Functions |===================*/
 /*===========================================================*/
 
@@ -303,5 +453,18 @@ void mp3__display_now_playing(void) {
   lcd__print_string(song_list__get_name_for_item(song_index), 2);
   lcd__print_string("Vol", 4);
   mp3__display_volume();
-  xQueueSend(Q_songname, song_list__get_name_for_item(song_index), portMAX_DELAY);
+  if (treble_bass_menu == 0)
+    xQueueSend(Q_songname, song_list__get_name_for_item(song_index), portMAX_DELAY);
+}
+
+void mp3__display_treble_menu(void) {
+  lcd__clear();
+  lcd__print_string("=== Treble Menu", 1);
+  mp3__display_treble();
+}
+
+void mp3__display_bass_menu(void) {
+  lcd__clear();
+  lcd__print_string("=== Bass Menu", 1);
+  mp3__display_bass();
 }

@@ -10,6 +10,7 @@ void encoder__turn_on_power(void);
 
 uint32_t encoder__get_index(void);
 
+gpio_s get_extra_button(void);
 gpio_s get_center_button(void);
 gpio_s get_down_button(void);
 gpio_s get_left_button(void);

@@ -24,8 +24,10 @@ extern SemaphoreHandle_t mp3_pause_bin_sem;
 extern SemaphoreHandle_t mp3_move_up_bin_sem;
 extern SemaphoreHandle_t mp3_move_down_bin_sem;
 extern SemaphoreHandle_t mp3_select_song_bin_sem;
+extern SemaphoreHandle_t mp3_treble_bass_bin_sem;
 
 extern volatile bool pause;
+extern volatile int treble_bass_menu;
 extern volatile bool playing_mode;
 extern volatile size_t song_index;
 
@@ -45,6 +47,12 @@ void sj2_to_mp3_decoder(char byte);
 
 void mp3__volume_adjuster(void);
 double mp3__get_volume_value(void);
+
+uint16_t mp3_get_treble_and_bass_value(void);
+void mp3__treble_adjuster(void);
+void mp3__update_treble_value(void);
+void mp3__bass_adjuster(void);
+void mp3__update_bass_value(void);
 
 void mp3__cs(void);
 void mp3__ds(void);
@@ -69,6 +77,8 @@ void mp3__increment_song_index(void);
 void mp3__decrement_song_index(void);
 void mp3__print_songs_in_menu(void);
 void mp3__display_now_playing(void);
+void mp3__display_treble_menu(void);
+void mp3__display_bass_menu(void);
 void mp3__attach_interrupts_for_menu(void);
 
 /*===========================================================*/
@@ -77,6 +87,8 @@ void mp3__attach_interrupts_for_menu(void);
 
 void mp3__interrupt_init(void);
 void mp3__display_volume(void);
+void mp3__display_treble(void);
+void mp3__display_bass(void);
 void mp3__clear_volume_positions(void);
 void mp3__gpio_interrupt_dispatcher(void);
 void mp3__encoder_interrupt_dispatcher(void);
@@ -94,9 +106,13 @@ void mp3__PLAY_PAUSE_ISR(void);
 void mp3__MOVE_UP_ISR(void);
 void mp3__MOVE_DOWN_ISR(void);
 void mp3__CENTER_BUTTON_4_MENU_ISR(void);
+void mp3__TREBLE_BASS_BUTTON_MENU_ISR(void);
 
 void mp3__NEXT_handler(void);
 void mp3__PREV_handler(void);
 void mp3__MOVE_UP_handler(void);
 void mp3__MOVE_DOWN_handler(void);
 void mp3__CENTER_BUTTON_4_MENU_handler(void);
+void mp3__TREBLE_BUTTON_MENU_handler(void);
+void mp3__BASS_BUTTON_MENU_handler(void);
+void display_menu_handler(void);
