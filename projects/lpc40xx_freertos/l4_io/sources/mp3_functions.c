@@ -293,29 +293,11 @@ void mp3__clear_volume_positions(void) {
 
 uint16_t mp3_get_treble_and_bass_value(void) {
 
-  printf("----------------------------------------\n");
-  printf("current_ST_AMPLITUDE Read: %d\n", current_ST_AMPLITUDE);
-  printf("current_ST_AMPLITUDE Read:  0x%4x\n", current_ST_AMPLITUDE);
-
   uint16_t treble_and_bass_value = 0;
-
-  // treble_and_bass_value |= (ST_AMPLITUDE_conversion_lookup_table[current_ST_AMPLITUDE] << 8) |
-  // (current_SB_AMPLITUDE);
-
   treble_and_bass_value |= (ST_AMPLITUDE_conversion_lookup_table[current_ST_AMPLITUDE] << 8);
-  printf("treble_and_bass_value Read: 0x%4x\n", treble_and_bass_value);
-
-  // treble_and_bass_value |= ((current_ST_AMPLITUDE - 8) << 12);
-  // treble_and_bass_value |= (current_ST_FREQLIMIT << 8);
 
   treble_and_bass_value |= (current_SB_AMPLITUDE << 4);
-  printf("current_SB_AMPLITUDE Read:  0x%4x\n", current_SB_AMPLITUDE);
-  printf("treble_and_bass_value Read: 0x%4x\n", treble_and_bass_value);
-
   treble_and_bass_value |= (current_SB_FREQLIMIT << 0);
-  printf("current_SB_FREQLIMIT Read:  0x%4x\n", current_SB_FREQLIMIT);
-  printf("treble_and_bass_value Read: 0x%4x\n", treble_and_bass_value);
-  printf("----------------------------------------\n");
 
   return treble_and_bass_value;
 }
