@@ -71,12 +71,14 @@ void mp3__NEXT_ISR(void) {
     xSemaphoreGiveFromISR(mp3_next_bin_sem, NULL);
   }
 }
+
 void mp3__PREV_ISR(void) {
   if (interrupt_received == false) {
     interrupt_received = true;
     xSemaphoreGiveFromISR(mp3_prev_bin_sem, NULL);
   }
 }
+
 void mp3__PLAY_PAUSE_ISR(void) {
   if (interrupt_received == false) {
     interrupt_received = true;
@@ -84,24 +86,28 @@ void mp3__PLAY_PAUSE_ISR(void) {
     xSemaphoreGiveFromISR(mp3_pause_bin_sem, NULL);
   }
 }
+
 void mp3__MOVE_UP_ISR(void) {
   if (interrupt_received == false) {
     interrupt_received = true;
     xSemaphoreGiveFromISR(mp3_move_up_bin_sem, NULL);
   }
 }
+
 void mp3__MOVE_DOWN_ISR(void) {
   if (interrupt_received == false) {
     interrupt_received = true;
     xSemaphoreGiveFromISR(mp3_move_down_bin_sem, NULL);
   }
 }
+
 void mp3__CENTER_BUTTON_4_MENU_ISR(void) {
   if (interrupt_received == false) {
     interrupt_received = true;
     xSemaphoreGiveFromISR(mp3_select_song_bin_sem, NULL);
   }
 }
+
 void mp3__TREBLE_BASS_BUTTON_MENU_ISR(void) {
   if (interrupt_received == false) {
     interrupt_received = true;
